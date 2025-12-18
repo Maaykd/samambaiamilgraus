@@ -1,7 +1,7 @@
 // assets/js/pages/admin.js
-import { renderAdminContentManager } from "../Components/adminContent.js";
-import { renderAdminProductsManager } from "../Components/adminProducts.js";
-import { renderAdminSponsorsManager } from "../Components/adminSponsors.js";
+import { renderAdminContentManager } from "../components/adminContent.js";
+import { renderAdminProductsManager } from "../components/adminProducts.js";
+import { renderAdminSponsorsManager } from "../components/adminSponsors.js";
 
 const ADMIN_PASSWORD = "milgraus2024";
 

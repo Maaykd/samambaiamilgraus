@@ -1,6 +1,6 @@
 // assets/js/pages/shop.js
 import { renderNavbar } from "../components/navbar.js";
-import { renderFooter } from "../Components/footer.js";
+import { renderFooter } from "../components/footer.js";
 import { getContactContent } from "../utils/siteContent.js";
 import { loadProducts } from "../state/productsState.js";
 
