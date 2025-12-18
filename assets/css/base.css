@@ -1,0 +1,123 @@
+/* base.css */
+
+/* registra a fonte GTA */
+@font-face {
+  font-family: "PricedownGTA";
+  src: url("../fonts/Pricedown Bl.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", "Roboto", "Helvetica Neue", Arial, "Noto Sans",
+    sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+    "Noto Color Emoji";
+  background: #000;
+  color: #fff;
+}
+
+/* títulos do hero com a fonte GTA */
+.hero-title-main,
+.hero-title-sub {
+  font-family: "PricedownGTA", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+  text-shadow:
+    -3px -3px 0 #000,
+     3px -3px 0 #000,
+    -3px  3px 0 #000,
+     3px  3px 0 #000;
+}
+
+/* SAMAMBAIA */
+.hero-title-main {
+  font-size: 3.8rem;
+  line-height: 1.1;
+  color: #ffffff;
+  margin: 0 0 0.1rem;
+}
+
+/* MIL GRAUS */
+.hero-title-sub {
+  font-size: 3rem;
+  line-height: 1.1;
+  color: #fbbf24;
+  margin: 0 0 1.2rem;
+}
+
+/* resto do arquivo permanece igual */
+.unauth-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: linear-gradient(to bottom, #fff, #e5e7eb);
+}
+
+.unauth-card {
+  max-width: 28rem;
+  width: 100%;
+  background: #fff;
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e5e7eb;
+}
+
+.unauth-icon-wrap {
+  width: 4rem;
+  height: 4rem;
+  margin: 0 auto 1.5rem;
+  border-radius: 999px;
+  background: #ffedd5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.unauth-icon {
+  width: 2rem;
+  height: 2rem;
+  color: #ea580c;
+}
+
+.unauth-title {
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 0.8rem;
+}
+
+.unauth-text {
+  text-align: center;
+  font-size: 0.95rem;
+  color: #475569;
+  margin-bottom: 1.5rem;
+}
+
+.unauth-box {
+  background: #f8fafc;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+.unauth-list {
+  list-style: disc;
+  margin-left: 1.1rem;
+  margin-top: 0.5rem;
+}
+
+.unauth-list li + li {
+  margin-top: 0.25rem;
+}
