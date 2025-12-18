@@ -1,11 +1,11 @@
 // assets/js/pages/home.js
-import { renderNavbar } from "../Components/navbar.js";
-import { renderHeroSection } from "../Components/heroSection.js";
-import { renderSponsorsCarousel } from "../Components/sponsorsCarousel.js";
+import { renderNavbar } from "../components/navbar.js";
+import { renderHeroSection } from "../components/heroSection.js";
+import { renderSponsorsCarousel } from "../components/sponsorsCarousel.js";
 import { loadActiveSponsors } from "../utils/sponsorsPublic.js";
-import { renderContentSection } from "../Components/contentSection.js";
-import { renderContactSection } from "../Components/contactSection.js";
-import { renderFooter } from "../Components/footer.js";
+import { renderContentSection } from "../components/contentSection.js";
+import { renderContactSection } from "../components/contactSection.js";
+import { renderFooter } from "../components/footer.js";
 import { initScrollReveal } from "../utils/revealOnScroll.js";
 import { loadSiteContent } from "../state/siteContentState.js";
 
