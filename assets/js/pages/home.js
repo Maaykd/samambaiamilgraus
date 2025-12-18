@@ -1,5 +1,5 @@
 // assets/js/pages/home.js
-import { renderNavbar } from "../components/navbar.js";
+import { renderNavbar } from "../Components/navbar.js";
 import { renderHeroSection } from "../Components/heroSection.js";
 import { renderSponsorsCarousel } from "../Components/sponsorsCarousel.js";
 import { loadActiveSponsors } from "../utils/sponsorsPublic.js";
