@@ -2,6 +2,7 @@
 import { renderAdminContentManager } from "../components/adminContent.js";
 import { renderAdminProductsManager } from "../components/adminProducts.js";
 import { renderAdminSponsorsManager } from "../components/adminSponsors.js";
+import { db, storage } from "../firebase.js";
 
 const ADMIN_PASSWORD = "milgraus2024";
 

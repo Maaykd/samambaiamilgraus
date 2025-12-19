@@ -2,14 +2,30 @@
 import { renderNavbar } from "../components/navbar.js";
 import { renderHeroSection } from "../components/heroSection.js";
 import { renderSponsorsCarousel } from "../components/sponsorsCarousel.js";
-import { loadActiveSponsors } from "../utils/sponsorsPublic.js";
 import { renderContentSection } from "../components/contentSection.js";
 import { renderContactSection } from "../components/contactSection.js";
 import { renderFooter } from "../components/footer.js";
 import { initScrollReveal } from "../utils/revealOnScroll.js";
 import { loadSiteContent } from "../state/siteContentState.js";
 
-document.addEventListener("DOMContentLoaded", () => {
+import { db } from "../firebase.js";
+import {
+  collection,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+async function loadActiveSponsorsFromFirestore() {
+  const snap = await getDocs(collection(db, "sponsors"));
+  const sponsors = snap.docs.map(d => ({
+    id: d.id,
+    ...d.data()
+  }));
+
+  // se o seu renderSponsorsCarousel espera só ativos, filtramos aqui
+  return sponsors.filter(s => s.active !== false);
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
   renderNavbar("navbar-root");
 
   const siteContent = loadSiteContent();
@@ -31,11 +47,20 @@ document.addEventListener("DOMContentLoaded", () => {
   const contactContent = {
     whatsapp: heroContent.whatsapp,
     instagram: heroContent.instagram,
-    email: heroContent.email,
+    email: heroContent.email
   };
 
   renderHeroSection("home-root", heroContent);
-  renderSponsorsCarousel("home-root", loadActiveSponsors());
+
+  // carrossel de patrocinadores vindo do Firestore
+  try {
+    const sponsors = await loadActiveSponsorsFromFirestore();
+    renderSponsorsCarousel("home-root", sponsors);
+  } catch (err) {
+    console.error("Erro ao carregar patrocinadores na Home:", err);
+    // se quiser, pode renderizar um fallback aqui
+  }
+
   renderContentSection("home-root");
   renderContactSection("home-root", contactContent);
   renderFooter("home-root");
