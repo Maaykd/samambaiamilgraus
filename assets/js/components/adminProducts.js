@@ -1,6 +1,14 @@
-import { loadProducts, saveProducts } from "../state/productsState.js"; // em adminProducts.js
-           // em shop.js
+// assets/js/components/adminProducts.js
 
+import { db } from "../firebase.js";
+import {
+  collection,
+  addDoc,
+  getDocs,
+  updateDoc,
+  deleteDoc,
+  doc,
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 const CATEGORY_LABELS = {
   roupas: "Roupas",
@@ -10,7 +18,7 @@ const CATEGORY_LABELS = {
 };
 
 export function renderAdminProductsManager(container) {
-  let products = loadProducts();
+  let products = [];
 
   container.innerHTML = `
     <section class="admin-products">
@@ -24,6 +32,25 @@ export function renderAdminProductsManager(container) {
 
   renderForm(formBox);
   renderList(listBox, products);
+
+  // Carrega produtos do Firestore ao abrir o admin
+  fetchProducts();
+
+  async function fetchProducts() {
+    try {
+      const snap = await getDocs(collection(db, "products"));
+      products = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      console.log("[ADMIN] Produtos do Firestore:", products);
+      renderList(listBox, products);
+    } catch (err) {
+      console.error("Erro ao carregar produtos:", err);
+      listBox.innerHTML = `
+        <div class="admin-card" style="margin-top:1.5rem; text-align:center;">
+          <p style="color:#ef4444;">Erro ao carregar produtos.</p>
+        </div>
+      `;
+    }
+  }
 
   function renderForm(box) {
     box.innerHTML = `
@@ -66,16 +93,16 @@ export function renderAdminProductsManager(container) {
     const catEl = box.querySelector("#prod-category");
     const statusEl = box.querySelector("#prod-form-status");
 
-    box.querySelector("#prod-create-btn").addEventListener("click", () => {
+    box.querySelector("#prod-create-btn").addEventListener("click", async () => {
       const name = nameEl.value.trim();
       const price = parseFloat(priceEl.value);
+
       if (!name || isNaN(price)) {
         statusEl.textContent = "Preencha pelo menos nome e preço.";
         return;
       }
 
-      const prod = {
-        id: Date.now(), // id simples; futuramente pode trocar por uuid ou id da API
+      const prodData = {
         name,
         description: descEl.value.trim(),
         price,
@@ -84,18 +111,27 @@ export function renderAdminProductsManager(container) {
         active: true,
       };
 
-      products.push(prod);
-      saveProducts(products);
+      statusEl.textContent = "Salvando...";
 
-      nameEl.value = "";
-      priceEl.value = "";
-      descEl.value = "";
-      imageEl.value = "";
-      catEl.value = "outros";
+      try {
+        const docRef = await addDoc(collection(db, "products"), prodData);
+        const prod = { id: docRef.id, ...prodData };
+        products.push(prod);
 
-      statusEl.textContent = "Produto adicionado!";
-      setTimeout(() => (statusEl.textContent = ""), 1500);
-      renderList(listBox, products);
+        nameEl.value = "";
+        priceEl.value = "";
+        descEl.value = "";
+        imageEl.value = "";
+        catEl.value = "outros";
+
+        statusEl.textContent = "Produto adicionado!";
+        setTimeout(() => (statusEl.textContent = ""), 1500);
+
+        renderList(listBox, products);
+      } catch (err) {
+        console.error("Erro ao adicionar produto:", err);
+        statusEl.textContent = "Erro ao salvar no servidor.";
+      }
     });
   }
 
@@ -123,7 +159,11 @@ export function renderAdminProductsManager(container) {
               <h3>${p.name}</h3>
               <p class="admin-product-desc">${p.description || ""}</p>
               <div class="admin-product-meta">
-                <span class="admin-product-price">R$ ${p.price.toFixed(2)}</span>
+                <span class="admin-product-price">R$ ${
+                  typeof p.price === "number"
+                    ? p.price.toFixed(2)
+                    : Number(p.price || 0).toFixed(2)
+                }</span>
                 ${
                   p.category
                     ? `<span class="admin-product-tag">${
@@ -156,25 +196,37 @@ export function renderAdminProductsManager(container) {
       <div class="admin-products-list">
         ${itemsHtml}
       </div>
-    `;
+   `;
 
     box.querySelectorAll("[data-action]").forEach((btn) => {
-      const id = Number(btn.getAttribute("data-id"));
+      const id = btn.getAttribute("data-id");
       const action = btn.getAttribute("data-action");
 
-      btn.addEventListener("click", () => {
+      btn.addEventListener("click", async () => {
+        const product = products.find((p) => p.id === id);
+        if (!product) return;
+
         if (action === "delete") {
-          products = products.filter((p) => p.id !== id);
-          saveProducts(products);
-          renderList(box, products);
+          try {
+            await deleteDoc(doc(db, "products", id));
+            products = products.filter((p) => p.id !== id);
+            renderList(box, products);
+          } catch (err) {
+            console.error("Erro ao deletar produto:", err);
+          }
         }
 
         if (action === "toggle") {
-          products = products.map((p) =>
-            p.id === id ? { ...p, active: !(p.active !== false) } : p
-          );
-          saveProducts(products);
-          renderList(box, products);
+          const newActive = !(product.active !== false);
+          try {
+            await updateDoc(doc(db, "products", id), { active: newActive });
+            products = products.map((p) =>
+              p.id === id ? { ...p, active: newActive } : p
+            );
+            renderList(box, products);
+          } catch (err) {
+            console.error("Erro ao atualizar produto:", err);
+          }
         }
       });
     });
