@@ -2,7 +2,12 @@
 import { renderNavbar } from "../components/navbar.js";
 import { renderFooter } from "../components/footer.js";
 import { getContactContent } from "../utils/siteContent.js";
-import { loadProducts } from "../state/productsState.js";
+
+import { db } from "../firebase.js";
+import {
+  collection,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 const CATEGORY_LABELS = {
   all: "Todos",
@@ -82,7 +87,6 @@ function renderProducts(root, products, selectedCategory, whatsappNumber) {
   const inner = document.createElement("div");
   inner.className = "shop-products-inner";
 
-  // só produtos ativos
   const activeProducts = products.filter((p) => p.active !== false);
   const filtered =
     selectedCategory === "all"
@@ -155,18 +159,32 @@ function renderProducts(root, products, selectedCategory, whatsappNumber) {
   root.appendChild(section);
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+async function loadProductsFromFirestore() {
+  const snap = await getDocs(collection(db, "products"));
+  return snap.docs.map(d => ({
+    id: d.id,
+    ...d.data()
+  }));
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
   renderNavbar("navbar-root");
 
   const root = document.getElementById("shop-root");
   if (!root) return;
 
-  // pega whatsapp do Admin, se existir
   const contact = getContactContent();
   const whatsappNumber = contact.whatsapp || DEFAULT_WHATSAPP;
 
   let selectedCategory = "all";
-  const products = loadProducts(); // <-- vindo do Admin
+
+  let products = [];
+  try {
+    products = await loadProductsFromFirestore();
+  } catch (err) {
+    console.error("Erro ao carregar produtos da loja:", err);
+    products = [];
+  }
 
   renderHero(root);
   renderFilters(root, selectedCategory);
