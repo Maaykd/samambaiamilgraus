@@ -6,13 +6,13 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth
 
 // cola o firebaseConfig que apareceu na tela do console:
 const firebaseConfig = {
-  apiKey: "AIzaSyBXiK6_aX30H7j26FRHMSR3830dx6e00",
+  apiKey: "AIzaSyBXKI6_aX3OH7OjZ6fRHMSR383odx06eO0",
   authDomain: "samambaiamilgraus-51dd0.firebaseapp.com",
   projectId: "samambaiamilgraus-51dd0",
   storageBucket: "samambaiamilgraus-51dd0.firebasestorage.app",
-  messagingSenderId: "528593029816",
-  appId: "1:528593029816:web:4033119657344d33cd11f41",
-  measurementId: "G-QELZQ5BXXC",
+  messagingSenderId: "528953928916",
+  appId: "1:528953928916:web:403311965734d43cd11f41",
+  measurementId: "G-QELZQ58XKC"
 };
 
 const app = initializeApp(firebaseConfig);
