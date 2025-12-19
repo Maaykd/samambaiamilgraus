@@ -6,12 +6,13 @@ import { renderContentSection } from "../components/contentSection.js";
 import { renderContactSection } from "../components/contactSection.js";
 import { renderFooter } from "../components/footer.js";
 import { initScrollReveal } from "../utils/revealOnScroll.js";
-import { loadSiteContent } from "../state/siteContentState.js";
 
 import { db } from "../firebase.js";
 import {
   collection,
-  getDocs
+  getDocs,
+  doc,
+  getDoc
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 async function loadActiveSponsorsFromFirestore() {
@@ -20,15 +21,28 @@ async function loadActiveSponsorsFromFirestore() {
     id: d.id,
     ...d.data()
   }));
-
-  // se o seu renderSponsorsCarousel espera só ativos, filtramos aqui
   return sponsors.filter(s => s.active !== false);
+}
+
+async function loadSiteContentRemote() {
+  const ref = doc(db, "siteContent", "main");
+  const snap = await getDoc(ref);
+  if (!snap.exists()) {
+    return {};
+  }
+  return snap.data();
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
   renderNavbar("navbar-root");
 
-  const siteContent = loadSiteContent();
+  let siteContent = {};
+  try {
+    siteContent = await loadSiteContentRemote();
+  } catch (err) {
+    console.error("Erro ao carregar siteContent remoto:", err);
+    siteContent = {};
+  }
 
   const heroContent = {
     title:
@@ -52,13 +66,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   renderHeroSection("home-root", heroContent);
 
-  // carrossel de patrocinadores vindo do Firestore
   try {
     const sponsors = await loadActiveSponsorsFromFirestore();
     renderSponsorsCarousel("home-root", sponsors);
   } catch (err) {
     console.error("Erro ao carregar patrocinadores na Home:", err);
-    // se quiser, pode renderizar um fallback aqui
   }
 
   renderContentSection("home-root");
