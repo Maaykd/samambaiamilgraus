@@ -19,10 +19,17 @@ const CATEGORY_LABELS = {
 
 const DEFAULT_WHATSAPP = "5561981988735";
 
+function getPriceNumber(product) {
+  if (typeof product.price === "number") return product.price;
+  const n = Number(product.price);
+  return Number.isFinite(n) ? n : 0;
+}
+
 function formatWhatsAppLink(product, whatsappNumber = DEFAULT_WHATSAPP) {
   const clean = whatsappNumber.replace(/\D/g, "");
+  const priceNumber = getPriceNumber(product);
   const message = encodeURIComponent(
-    `Olá! Tenho interesse no produto: ${product.name} no valor de R$ ${product.price.toFixed(2)}`
+    `Olá! Tenho interesse no produto: ${product.name} no valor de R$ ${priceNumber.toFixed(2)}`
   );
   return `https://wa.me/${clean}?text=${message}`;
 }
@@ -108,13 +115,14 @@ function renderProducts(root, products, selectedCategory, whatsappNumber) {
     `;
   } else {
     const cardsHtml = filtered
-      .map(
-        (p) => `
+      .map((p) => {
+        const priceNumber = getPriceNumber(p);
+        return `
         <article class="shop-card">
           <div class="shop-card-image-wrap">
             <img src="${p.image_url}" alt="${p.name}">
             <div class="shop-card-overlay"></div>
-            <div class="shop-card-price">R$ ${p.price.toFixed(2)}</div>
+            <div class="shop-card-price">R$ ${priceNumber.toFixed(2)}</div>
             ${
               p.category
                 ? `<div class="shop-card-category">${
@@ -135,8 +143,8 @@ function renderProducts(root, products, selectedCategory, whatsappNumber) {
             </a>
           </div>
         </article>
-      `
-      )
+      `;
+      })
       .join("");
 
     inner.innerHTML = `
@@ -181,6 +189,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   let products = [];
   try {
     products = await loadProductsFromFirestore();
+    console.log("[SHOP] Produtos do Firestore:", products);
   } catch (err) {
     console.error("Erro ao carregar produtos da loja:", err);
     products = [];
