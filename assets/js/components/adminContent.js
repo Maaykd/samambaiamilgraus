@@ -1,5 +1,11 @@
 // assets/js/components/adminContent.js
 import { loadSiteContentRemote, saveSiteContentRemote } from "../state/siteContentRemote.js";
+import { storage } from "../firebase.js";
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 
 export function renderAdminContentManager(container) {
   container.innerHTML = `
@@ -30,19 +36,31 @@ export function renderAdminContentManager(container) {
         </div>
 
         <div class="admin-field-group">
+          <label class="admin-label" for="hero-image-file">
+            Foto do Hero (upload)
+          </label>
+          <input
+            id="hero-image-file"
+            type="file"
+            accept="image/*"
+            class="admin-input-full"
+          />
+          <small class="admin-help-text">
+            Tamanho ideal: 900x1100px, formato JPG.
+          </small>
+        </div>
+
+        <div class="admin-field-group">
           <label class="admin-label" for="hero-image-url">
-            URL da Foto (ideal 900x1100px)
+            URL da Foto (opcional)
           </label>
           <input
             id="hero-image-url"
             class="admin-input-full"
             type="text"
-            placeholder="https://... ou caminho local"
+            placeholder="https://... (usar se não enviar arquivo)"
             value=""
           />
-          <p class="admin-status" style="color:#9ca3af;margin-top:0.25rem;">
-            Tamanho ideal: 900x1100px, formato JPG.
-          </p>
         </div>
 
         <button id="btn-save-hero" class="admin-btn-primary-full">
@@ -100,7 +118,8 @@ export function renderAdminContentManager(container) {
 
   const heroTitle = container.querySelector("#hero-title");
   const heroDesc = container.querySelector("#hero-description");
-  const heroImageEl = container.querySelector("#hero-image-url");
+  const heroImageUrlEl = container.querySelector("#hero-image-url");
+  const heroImageFileEl = container.querySelector("#hero-image-file");
   const heroStatus = container.querySelector("#hero-status");
 
   const contactWhats = container.querySelector("#contact-whatsapp");
@@ -114,7 +133,7 @@ export function renderAdminContentManager(container) {
       const remote = await loadSiteContentRemote();
       heroTitle.value = remote.hero_title || "";
       heroDesc.value = remote.hero_description || "";
-      heroImageEl.value = remote.hero_image_url || "";
+      heroImageUrlEl.value = remote.hero_image_url || "";
       contactWhats.value = remote.contact_whatsapp || "";
       contactInsta.value = remote.contact_instagram || "";
       contactEmail.value = remote.contact_email || "";
@@ -125,12 +144,39 @@ export function renderAdminContentManager(container) {
 
   container.querySelector("#btn-save-hero").addEventListener("click", async () => {
     heroStatus.textContent = "Salvando...";
+
+    const title = heroTitle.value.trim();
+    const description = heroDesc.value.trim();
+    const manualUrl = heroImageUrlEl.value.trim();
+    const file = heroImageFileEl.files[0] || null;
+
     try {
+      let finalImageUrl = manualUrl;
+
+      // Se tiver arquivo, faz upload para o Storage
+      if (file) {
+        const safeName = title
+          ? title.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9\-]/g, "")
+          : "hero";
+        const fileExt = file.name.split(".").pop() || "jpg";
+        const filePath = `hero/${Date.now()}-${safeName}.${fileExt}`;
+
+        const storageRef = ref(storage, filePath);
+        await uploadBytes(storageRef, file);
+        finalImageUrl = await getDownloadURL(storageRef);
+      }
+
       await saveSiteContentRemote({
-        hero_title: heroTitle.value.trim(),
-        hero_description: heroDesc.value.trim(),
-        hero_image_url: heroImageEl.value.trim()
+        hero_title: title,
+        hero_description: description,
+        hero_image_url: finalImageUrl,
       });
+
+      if (finalImageUrl) {
+        heroImageUrlEl.value = finalImageUrl;
+      }
+      heroImageFileEl.value = "";
+
       heroStatus.textContent = "Hero salvo com sucesso!";
     } catch (err) {
       console.error("Erro ao salvar Hero:", err);
@@ -145,7 +191,7 @@ export function renderAdminContentManager(container) {
       await saveSiteContentRemote({
         contact_whatsapp: contactWhats.value.trim(),
         contact_instagram: contactInsta.value.trim(),
-        contact_email: contactEmail.value.trim()
+        contact_email: contactEmail.value.trim(),
       });
       contactStatus.textContent = "Contato salvo com sucesso!";
     } catch (err) {
