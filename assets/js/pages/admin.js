@@ -2,28 +2,26 @@
 import { renderAdminContentManager } from "../components/adminContent.js";
 import { renderAdminProductsManager } from "../components/adminProducts.js";
 import { renderAdminSponsorsManager } from "../components/adminSponsors.js";
-import { db, storage } from "../firebase.js";
+import { auth } from "../firebase.js";
 
-const ADMIN_PASSWORD = "milgraus2024";
+import {
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut,
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
+// Helpers de navegação
 function createPageUrl(name) {
   if (name === "Home") return "index.html";
   if (name === "Shop") return "shop.html";
   return name.toLowerCase() + ".html";
 }
 
-function isAuthenticated() {
-  return localStorage.getItem("admin_auth") === "true";
-}
-
-function setAuthenticated(auth) {
-  if (auth) {
-    localStorage.setItem("admin_auth", "true");
-  } else {
-    localStorage.removeItem("admin_auth");
-  }
-}
-
+/**
+ * LOGIN
+ * Tela de login com email + senha usando Firebase Auth.
+ * Só usuários cadastrados no console (ou futuramente via painel) conseguem entrar.
+ */
 function renderLogin(root) {
   root.innerHTML = `
     <div class="admin-login-wrapper">
@@ -31,15 +29,27 @@ function renderLogin(root) {
         <div class="admin-card-header">
           <div class="admin-card-icon">🔐</div>
           <h1 class="admin-card-title">Área Administrativa</h1>
-          <p class="admin-card-sub">Digite a senha para acessar</p>
+          <p class="admin-card-sub">Acesse com seu e-mail e senha</p>
         </div>
         <form id="admin-login-form">
           <div class="admin-form-group">
+            <input
+              id="admin-email"
+              type="email"
+              placeholder="E-mail"
+              class="admin-input"
+              autocomplete="email"
+              required
+            />
+          </div>
+          <div class="admin-form-group admin-form-group-password">
             <input
               id="admin-password"
               type="password"
               placeholder="Senha"
               class="admin-input"
+              autocomplete="current-password"
+              required
             />
             <button type="button" id="admin-toggle-visibility" class="admin-toggle-btn">
               👁
@@ -58,6 +68,7 @@ function renderLogin(root) {
   `;
 
   const form = document.getElementById("admin-login-form");
+  const emailInput = document.getElementById("admin-email");
   const passwordInput = document.getElementById("admin-password");
   const errorEl = document.getElementById("admin-error");
   const toggleBtn = document.getElementById("admin-toggle-visibility");
@@ -70,28 +81,57 @@ function renderLogin(root) {
     toggleBtn.textContent = showPassword ? "🙈" : "👁";
   });
 
-  form.addEventListener("submit", evt => {
+  form.addEventListener("submit", async (evt) => {
     evt.preventDefault();
-    const value = passwordInput.value || "";
-    if (value === ADMIN_PASSWORD) {
-      setAuthenticated(true);
-      errorEl.style.display = "none";
-      renderAdminPanel(root);
-    } else {
-      errorEl.textContent = "Senha incorreta";
+
+    const email = (emailInput.value || "").trim();
+    const password = passwordInput.value || "";
+
+    if (!email || !password) {
+      errorEl.textContent = "Preencha e-mail e senha.";
+      errorEl.style.display = "block";
+      return;
+    }
+
+    errorEl.style.display = "none";
+
+    try {
+      // Login via Firebase Auth
+      await signInWithEmailAndPassword(auth, email, password);
+      // onAuthStateChanged vai disparar e chamar renderAdminPanel
+    } catch (err) {
+      console.error("Erro ao fazer login:", err);
+
+      let message = "Não foi possível entrar. Verifique os dados.";
+      if (err.code === "auth/invalid-email") {
+        message = "E-mail inválido.";
+      } else if (err.code === "auth/user-disabled") {
+        message = "Usuário desativado. Fale com o administrador.";
+      } else if (err.code === "auth/user-not-found" || err.code === "auth/wrong-password" || err.code === "auth/invalid-credential") {
+        message = "E-mail ou senha incorretos.";
+      }
+
+      errorEl.textContent = message;
       errorEl.style.display = "block";
     }
   });
 }
 
-function renderAdminPanel(root) {
+/**
+ * PAINEL ADMIN
+ * Só deve ser exibido se houver usuário autenticado (controlado por onAuthStateChanged).
+ */
+function renderAdminPanel(root, user) {
   root.innerHTML = `
     <div class="admin-panel-wrapper">
       <div class="admin-panel-inner">
         <header class="admin-header">
           <div>
             <h1 class="admin-header-title">Painel Administrativo</h1>
-            <p class="admin-header-sub">Gerencie o conteúdo do site</p>
+            <p class="admin-header-sub">
+              Gerencie o conteúdo do site
+              ${user && user.email ? ` – logado como <strong>${user.email}</strong>` : ""}
+            </p>
           </div>
           <div class="admin-header-actions">
             <a href="${createPageUrl("Home")}">
@@ -132,7 +172,7 @@ function renderAdminPanel(root) {
     </div>
   `;
 
-  // inicializar managers
+  // Inicializar managers
   const contentPanel = root.querySelector("#admin-content-panel");
   if (contentPanel) renderAdminContentManager(contentPanel);
 
@@ -142,25 +182,30 @@ function renderAdminPanel(root) {
   const sponsorsPanel = root.querySelector("#admin-sponsors-panel");
   if (sponsorsPanel) renderAdminSponsorsManager(sponsorsPanel);
 
-  // logout
+  // Logout
   const logoutBtn = document.getElementById("admin-logout-btn");
-  logoutBtn.addEventListener("click", () => {
-    setAuthenticated(false);
-    renderLogin(root);
+  logoutBtn.addEventListener("click", async () => {
+    try {
+      await signOut(auth);
+      // onAuthStateChanged vai voltar para a tela de login
+    } catch (err) {
+      console.error("Erro ao sair:", err);
+      alert("Não foi possível sair. Recarregue a página.");
+    }
   });
 
-  // tabs
+  // Tabs
   const tabButtons = root.querySelectorAll("[data-tab]");
   const tabPanels = root.querySelectorAll("[data-tab-panel]");
 
-  tabButtons.forEach(btn => {
+  tabButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
       const tab = btn.getAttribute("data-tab");
 
-      tabButtons.forEach(b => b.classList.remove("admin-tab-btn-active"));
+      tabButtons.forEach((b) => b.classList.remove("admin-tab-btn-active"));
       btn.classList.add("admin-tab-btn-active");
 
-      tabPanels.forEach(panel => {
+      tabPanels.forEach((panel) => {
         panel.style.display =
           panel.getAttribute("data-tab-panel") === tab ? "block" : "none";
       });
@@ -168,13 +213,30 @@ function renderAdminPanel(root) {
   });
 }
 
+/**
+ * INICIALIZAÇÃO DA PÁGINA
+ * Usa onAuthStateChanged para proteger a rota:
+ * - Se tiver usuário logado → mostra painel
+ * - Se não tiver → mostra login
+ */
 document.addEventListener("DOMContentLoaded", () => {
   const root = document.getElementById("admin-root");
   if (!root) return;
 
-  if (isAuthenticated()) {
-    renderAdminPanel(root);
-  } else {
-    renderLogin(root);
-  }
+  // Estado inicial de “carregando”
+  root.innerHTML = `
+    <div class="admin-login-wrapper">
+      <div class="admin-card">
+        <p>Carregando...</p>
+      </div>
+    </div>
+  `;
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      renderAdminPanel(root, user);
+    } else {
+      renderLogin(root);
+    }
+  });
 });
