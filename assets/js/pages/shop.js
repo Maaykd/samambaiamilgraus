@@ -2,11 +2,12 @@
 import { renderNavbar } from "../components/navbar.js";
 import { renderFooter } from "../components/footer.js";
 import { getContactContent } from "../utils/siteContent.js";
+import { getPriceNumber, formatCurrency, formatWhatsAppLink } from "../utils/format.js";
 
 import { db } from "../firebase.js";
 import {
   collection,
-  getDocs
+  getDocs,
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 const CATEGORY_LABELS = {
@@ -18,21 +19,6 @@ const CATEGORY_LABELS = {
 };
 
 const DEFAULT_WHATSAPP = "5561981988735";
-
-function getPriceNumber(product) {
-  if (typeof product.price === "number") return product.price;
-  const n = Number(product.price);
-  return Number.isFinite(n) ? n : 0;
-}
-
-function formatWhatsAppLink(product, whatsappNumber = DEFAULT_WHATSAPP) {
-  const clean = whatsappNumber.replace(/\D/g, "");
-  const priceNumber = getPriceNumber(product);
-  const message = encodeURIComponent(
-    `Olá! Tenho interesse no produto: ${product.name} no valor de R$ ${priceNumber.toFixed(2)}`
-  );
-  return `https://wa.me/${clean}?text=${message}`;
-}
 
 function renderHero(root) {
   root.insertAdjacentHTML(
@@ -116,13 +102,19 @@ function renderProducts(root, products, selectedCategory, whatsappNumber) {
   } else {
     const cardsHtml = filtered
       .map((p) => {
-        const priceNumber = getPriceNumber(p);
+        const priceNumber = getPriceNumber(p.price);
+        const priceText = formatCurrency(priceNumber);
+        const waLink = formatWhatsAppLink(
+          whatsappNumber,
+          `Olá! Tenho interesse no produto: ${p.name} no valor de ${priceText}`
+        );
+
         return `
         <article class="shop-card">
           <div class="shop-card-image-wrap">
             <img src="${p.image_url}" alt="${p.name}">
             <div class="shop-card-overlay"></div>
-            <div class="shop-card-price">R$ ${priceNumber.toFixed(2)}</div>
+            <div class="shop-card-price">${priceText}</div>
             ${
               p.category
                 ? `<div class="shop-card-category">${
@@ -134,10 +126,7 @@ function renderProducts(root, products, selectedCategory, whatsappNumber) {
           <div class="shop-card-body">
             <h3 class="shop-card-title">${p.name}</h3>
             <p class="shop-card-text">${p.description || ""}</p>
-            <a href="${formatWhatsAppLink(
-              p,
-              whatsappNumber
-            )}" target="_blank" rel="noopener noreferrer" class="shop-card-btn">
+            <a href="${waLink}" target="_blank" rel="noopener noreferrer" class="shop-card-btn">
               <span>💬</span>
               <span>Comprar pelo WhatsApp</span>
             </a>
@@ -169,9 +158,9 @@ function renderProducts(root, products, selectedCategory, whatsappNumber) {
 
 async function loadProductsFromFirestore() {
   const snap = await getDocs(collection(db, "products"));
-  return snap.docs.map(d => ({
+  return snap.docs.map((d) => ({
     id: d.id,
-    ...d.data()
+    ...d.data(),
   }));
 }
 
