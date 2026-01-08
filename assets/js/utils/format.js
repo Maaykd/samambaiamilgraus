@@ -1,10 +1,28 @@
 // assets/js/utils/format.js
 export function getPriceNumber(raw) {
   if (raw == null) return null;
-  const normalized = String(raw)
-    .replace(".", "")
-    .replace(",", ".")
-    .replace(/[^\d.]/g, "");
+
+  const str = String(raw).trim();
+
+  // remove tudo que não é dígito, vírgula ou ponto
+  const cleaned = str.replace(/[^0-9.,]/g, "");
+
+  const hasComma = cleaned.includes(",");
+  const hasDot = cleaned.includes(".");
+
+  let normalized;
+
+  if (hasComma && hasDot) {
+    // "1.234,56" -> "1234.56"
+    normalized = cleaned.replace(/\./g, "").replace(",", ".");
+  } else if (hasComma && !hasDot) {
+    // "79,99" -> "79.99"
+    normalized = cleaned.replace(",", ".");
+  } else {
+    // "79.99" ou "7999" -> mantem
+    normalized = cleaned;
+  }
+
   const num = Number(normalized);
   return Number.isFinite(num) ? num : null;
 }
