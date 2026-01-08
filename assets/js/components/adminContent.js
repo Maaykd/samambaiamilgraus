@@ -63,6 +63,40 @@ export function renderAdminContentManager(container) {
           />
         </div>
 
+        <!-- NOVOS CAMPOS DE STATS -->
+        <div class="admin-field-group">
+          <label class="admin-label" for="hero-stats-followers">Seguidores (ex: 118K)</label>
+          <input
+            id="hero-stats-followers"
+            class="admin-input-full"
+            type="text"
+            placeholder="118K"
+            value=""
+          />
+        </div>
+
+        <div class="admin-field-group">
+          <label class="admin-label" for="hero-stats-views">Visualizações (ex: 5.4M)</label>
+          <input
+            id="hero-stats-views"
+            class="admin-input-full"
+            type="text"
+            placeholder="5.4M"
+            value=""
+          />
+        </div>
+
+        <div class="admin-field-group">
+          <label class="admin-label" for="hero-stats-posts">Posts (ex: 3.5K)</label>
+          <input
+            id="hero-stats-posts"
+            class="admin-input-full"
+            type="text"
+            placeholder="3.5K"
+            value=""
+          />
+        </div>
+
         <button id="btn-save-hero" class="admin-btn-primary-full">
           <span>💾</span>
           <span>Salvar Hero</span>
@@ -122,6 +156,10 @@ export function renderAdminContentManager(container) {
   const heroImageFileEl = container.querySelector("#hero-image-file");
   const heroStatus = container.querySelector("#hero-status");
 
+  const heroStatsFollowersEl = container.querySelector("#hero-stats-followers");
+  const heroStatsViewsEl = container.querySelector("#hero-stats-views");
+  const heroStatsPostsEl = container.querySelector("#hero-stats-posts");
+
   const contactWhats = container.querySelector("#contact-whatsapp");
   const contactInsta = container.querySelector("#contact-instagram");
   const contactEmail = container.querySelector("#contact-email");
@@ -134,6 +172,12 @@ export function renderAdminContentManager(container) {
       heroTitle.value = remote.hero_title || "";
       heroDesc.value = remote.hero_description || "";
       heroImageUrlEl.value = remote.hero_image_url || "";
+
+      // preencher stats
+      heroStatsFollowersEl.value = remote.stats_followers || "118K";
+      heroStatsViewsEl.value = remote.stats_views || "5.4M";
+      heroStatsPostsEl.value = remote.stats_posts || "3.5K";
+
       contactWhats.value = remote.contact_whatsapp || "";
       contactInsta.value = remote.contact_instagram || "";
       contactEmail.value = remote.contact_email || "";
@@ -149,6 +193,10 @@ export function renderAdminContentManager(container) {
     const description = heroDesc.value.trim();
     const manualUrl = heroImageUrlEl.value.trim();
     const file = heroImageFileEl.files[0] || null;
+
+    const stats_followers = heroStatsFollowersEl.value.trim();
+    const stats_views = heroStatsViewsEl.value.trim();
+    const stats_posts = heroStatsPostsEl.value.trim();
 
     try {
       let finalImageUrl = manualUrl;
@@ -170,6 +218,9 @@ export function renderAdminContentManager(container) {
         hero_title: title,
         hero_description: description,
         hero_image_url: finalImageUrl,
+        stats_followers,
+        stats_views,
+        stats_posts,
       });
 
       if (finalImageUrl) {

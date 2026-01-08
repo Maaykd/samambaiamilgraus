@@ -1,22 +1,23 @@
 // assets/js/components/heroSection.js
 
-const HERO_STATS = [
+const HERO_STATS = (content = {}) => [
   {
     icon: "👥",
-    value: "118K",
+    value: content.stats_followers || "118K",
     label: "Seguidores",
   },
   {
     icon: "👁️",
-    value: "5.4M",
+    value: content.stats_views || "5.4M",
     label: "Visualizações",
   },
   {
     icon: "📄",
-    value: "3.5K",
+    value: content.stats_posts || "3.5K",
     label: "Posts",
   },
 ];
+
 
 export function renderHeroSection(rootId = "home-root", content = {}) {
   const root = document.getElementById(rootId);
@@ -35,8 +36,8 @@ export function renderHeroSection(rootId = "home-root", content = {}) {
     content.image_url ||
     "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=600&fit=crop";
 
-  const statsHtml = HERO_STATS.map(
-    (s) => `
+  const statsHtml = HERO_STATS(content)
+  .map((s) => `
     <div class="hero-stat-card">
       <div class="hero-stat-icon">${s.icon}</div>
       <div class="hero-stat-value">${s.value}</div>

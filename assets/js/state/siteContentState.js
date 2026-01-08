@@ -6,7 +6,10 @@ const DEFAULT_CONTENT = {
   hero_image_url: "", 
   contact_whatsapp: "",
   contact_instagram: "",
-  contact_email: ""
+  contact_email: "",
+  stats_followers: "118K",
+  stats_views: "5.4M",
+  stats_posts: "3.5K",
 };
 
 export function loadSiteContent() {

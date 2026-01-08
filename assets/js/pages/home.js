@@ -55,8 +55,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     instagram: siteContent.contact_instagram || "samambaiamilgraus",
     email: siteContent.contact_email || "samambaiamilgraus@gmail.com",
     image_url:
-      siteContent.hero_image_url || "assets/img/hero-default.jpg"
+      siteContent.hero_image_url || "assets/img/hero-default.jpg",
+    stats_followers: siteContent.stats_followers || "118K",
+    stats_views: siteContent.stats_views || "5.4M",
+    stats_posts: siteContent.stats_posts || "3.5K",
   };
+
 
   const contactContent = {
     whatsapp: heroContent.whatsapp,
