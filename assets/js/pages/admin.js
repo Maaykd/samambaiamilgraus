@@ -2,6 +2,7 @@
 import { renderAdminContentManager } from "../components/adminContent.js";
 import { renderAdminProductsManager } from "../components/adminProducts.js";
 import { renderAdminSponsorsManager } from "../components/adminSponsors.js";
+import { renderAdminNewsManager } from "../components/adminNews.js"; // NOVO
 import { auth } from "../firebase.js";
 
 import {
@@ -150,13 +151,12 @@ function renderAdminPanel(root, user) {
             <button class="admin-tab-btn admin-tab-btn-active" data-tab="content">Conteúdo</button>
             <button class="admin-tab-btn" data-tab="products">Produtos</button>
             <button class="admin-tab-btn" data-tab="sponsors">Patrocinadores</button>
+            <button class="admin-tab-btn" data-tab="news">Notícias</button>
           </div>
 
           <div class="admin-tabs-content">
             <div data-tab-panel="content">
-              <div class="admin-card" id="admin-content-panel">
-                <!-- preenchido via JS -->
-              </div>
+              <div class="admin-card" id="admin-content-panel"></div>
             </div>
 
             <div data-tab-panel="products" style="display:none">
@@ -166,13 +166,16 @@ function renderAdminPanel(root, user) {
             <div data-tab-panel="sponsors" style="display:none">
               <div class="admin-card" id="admin-sponsors-panel"></div>
             </div>
+
+            <div data-tab-panel="news" style="display:none">
+              <div class="admin-card" id="admin-news-panel"></div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   `;
 
-  // Inicializar managers
   const contentPanel = root.querySelector("#admin-content-panel");
   if (contentPanel) renderAdminContentManager(contentPanel);
 
@@ -181,6 +184,9 @@ function renderAdminPanel(root, user) {
 
   const sponsorsPanel = root.querySelector("#admin-sponsors-panel");
   if (sponsorsPanel) renderAdminSponsorsManager(sponsorsPanel);
+
+  const newsPanel = root.querySelector("#admin-news-panel");
+  if (newsPanel) renderAdminNewsManager(newsPanel);
 
   // Logout
   const logoutBtn = document.getElementById("admin-logout-btn");

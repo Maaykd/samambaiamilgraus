@@ -2,19 +2,21 @@
 
 const NAV_ITEMS = [
   { name: "Início", path: "Home", icon: "🏠" },
-  { name: "Loja", path: "Shop", icon: "🛍️" }
+  { name: "Loja", path: "Shop", icon: "🛍️" },
+  { name: "Notícias", path: "News", icon: "📰" }
 ];
 
 function getCurrentPageName() {
   const path = window.location.pathname.split("/").pop() || "index.html";
   if (path.toLowerCase().includes("shop")) return "Shop";
   if (path.toLowerCase().includes("admin")) return "Admin";
+  if (path.toLowerCase().includes("news")) return "News";
   return "Home";
 }
 
 function createPageUrl(name) {
   if (name === "Home") return "index.html";
-  return name.toLowerCase() + ".html";
+  return name.toLowerCase() + ".html"; // News -> news.html
 }
 
 export function renderNavbar(rootId = "navbar-root") {
