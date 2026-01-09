@@ -2,21 +2,22 @@
 
 const HERO_STATS = (content = {}) => [
   {
-    icon: "👥",
+    icon: "people-fill",
     value: content.stats_followers || "118K",
     label: "Seguidores",
   },
   {
-    icon: "👁️",
+    icon: "eye-fill",
     value: content.stats_views || "5.4M",
     label: "Visualizações",
   },
   {
-    icon: "📄",
+    icon: "file-earmark-text-fill",
     value: content.stats_posts || "3.5K",
     label: "Posts",
   },
 ];
+
 
 
 export function renderHeroSection(rootId = "home-root", content = {}) {
@@ -37,14 +38,16 @@ export function renderHeroSection(rootId = "home-root", content = {}) {
     "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=600&fit=crop";
 
   const statsHtml = HERO_STATS(content)
-  .map((s) => `
+    .map(
+      (s) => `
     <div class="hero-stat-card">
-      <div class="hero-stat-icon">${s.icon}</div>
+      <i class="bi bi-${s.icon} hero-stat-icon"></i>
       <div class="hero-stat-value">${s.value}</div>
       <div class="hero-stat-label">${s.label}</div>
     </div>
   `
-  ).join("");
+    )
+    .join("");
 
   const instagramSvg = `
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -106,8 +109,12 @@ export function renderHeroSection(rootId = "home-root", content = {}) {
               alt="Samambaia Mil Graus"
               class="hero-photo"
             />
-            <div class="hero-badge-bottom">CUIDAAA!! 🔥</div>
-          </div>
+            <div class="hero-badge-bottom">
+  <span>CUIDAAA!!</span>
+  <i class="bi bi-fire hero-cta-icon"></i>
+
+</div>
+
         </div>
       </div>
     </div>

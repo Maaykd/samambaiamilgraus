@@ -866,3 +866,24 @@
   opacity: 1;
   transform: translateY(0);
 }
+
+.hero-stat-icon {
+  font-size: 1.7rem;
+  margin-bottom: 0.5rem;
+  
+}
+
+/* seguidores */
+.hero-stat-card:nth-child(1) .hero-stat-icon {
+  color: #22c55e; /* verde */
+}
+
+/* visualizações */
+.hero-stat-card:nth-child(2) .hero-stat-icon {
+  color: #f97316; /* laranja */
+}
+
+/* posts */
+.hero-stat-card:nth-child(3) .hero-stat-icon {
+  color: #38bdf8; /* azul */
+}
