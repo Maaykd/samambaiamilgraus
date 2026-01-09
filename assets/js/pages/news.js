@@ -76,6 +76,30 @@ function getNewsIdFromQuery() {
   return params.get("id");
 }
 
+/**
+ * Converte texto cru do textarea em HTML:
+ * - Linhas em branco (duas quebras ou mais) viram parágrafos distintos
+ * - Quebras simples viram <br>
+ */
+function formatContentToHtml(raw) {
+  if (!raw) return "";
+  const trimmed = raw.trim();
+
+  // separa por blocos com linha em branco
+  const paragraphs = trimmed.split(/\n\s*\n/);
+
+  return paragraphs
+    .map((p) => {
+      const safe = p
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+      const withBr = safe.replace(/\n/g, "<br />");
+      return `<p>${withBr}</p>`;
+    })
+    .join("");
+}
+
 // lista
 async function renderNewsList(rootId) {
   const root = document.getElementById(rootId);
@@ -346,7 +370,7 @@ async function renderNewsDetail(rootId, newsId) {
 
       <section class="news-detail__content-card">
         <div class="news-detail__content">
-          ${news.content || ""}
+          ${formatContentToHtml(news.content || "")}
         </div>
       </section>
 
