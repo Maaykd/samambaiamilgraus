@@ -493,3 +493,34 @@
     transform: translateY(0);
   }
 }
+
+
+.news-source {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.news-source-label {
+  font-weight: 600;
+  color: #fbbf24;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+}
+
+.news-source-text {
+  color: #e5e7eb;
+}
+
+.news-source-link {
+  color: #38bdf8;
+  text-decoration: none;
+}
+
+.news-source-link:hover {
+  text-decoration: underline;
+}

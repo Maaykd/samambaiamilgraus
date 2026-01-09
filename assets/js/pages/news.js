@@ -165,20 +165,21 @@ async function renderNewsList(rootId) {
     <aside class="news-sidebar">
       <h3 class="news-sidebar__title">Mais lidas</h3>
       <ul class="news-sidebar__list">
-        ${allNews.slice(0, 3)
-      .map(
-        (n) => `
+        ${allNews
+          .slice(0, 3)
+          .map(
+            (n) => `
           <li class="news-sidebar__item">
             <a href="news.html?id=${n.id}">
               <span class="news-sidebar__item-title">${n.title || ""}</span>
               <span class="news-sidebar__item-date">${formatDate(
-          n.created_at
-        )}</span>
+                n.created_at
+              )}</span>
             </a>
           </li>
         `
-      )
-      .join("")}
+          )
+          .join("")}
       </ul>
     </aside>
   `;
@@ -276,6 +277,51 @@ async function renderNewsDetail(rootId, newsId) {
   const allNews = await fetchPublishedNews();
   const moreNews = allNews.filter((n) => n.id !== newsId).slice(0, 3);
 
+  const hasSource =
+    (news.source_name && news.source_name.trim()) ||
+    (news.source_instagram && news.source_instagram.trim()) ||
+    (news.source_url && news.source_url.trim());
+
+  const sourceHtml = hasSource
+    ? `
+      <div class="news-source">
+        <span class="news-source-label">Fonte</span>
+        ${
+          news.source_name
+            ? `<span class="news-source-text">${news.source_name}</span>`
+            : ""
+        }
+        ${
+          news.source_instagram
+            ? `<a
+                  href="https://instagram.com/${news.source_instagram.replace(
+                    /^@/,
+                    ""
+                  )}"
+                  class="news-source-link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+               >
+                  @${news.source_instagram.replace(/^@/, "")}
+               </a>`
+            : ""
+        }
+        ${
+          news.source_url
+            ? `<a
+                  href="${news.source_url}"
+                  class="news-source-link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+               >
+                  Ver publicação
+               </a>`
+            : ""
+        }
+      </div>
+    `
+    : "";
+
   root.innerHTML = `
     <article class="news-detail">
       <header class="news-detail__header">
@@ -287,6 +333,7 @@ async function renderNewsDetail(rootId, newsId) {
           <span>•</span>
           <span>${news.author || "Bidô – Samambaia Mil Graus"}</span>
         </div>
+        ${sourceHtml}
       </header>
 
       <div class="news-detail__image-wrapper">
@@ -298,17 +345,17 @@ async function renderNewsDetail(rootId, newsId) {
       </div>
 
       <section class="news-detail__content-card">
-  <div class="news-detail__content">
-    ${news.content || ""}
-  </div>
-</section>
+        <div class="news-detail__content">
+          ${news.content || ""}
+        </div>
+      </section>
 
       <section class="news-more">
         <h2 class="news-more__title">Mais notícias</h2>
         <div class="news-more__list">
           ${moreNews
-      .map(
-        (n) => `
+            .map(
+              (n) => `
             <article class="news-card news-card--compact">
               <div class="news-card__image-wrapper">
                 <img
@@ -327,8 +374,8 @@ async function renderNewsDetail(rootId, newsId) {
               </div>
             </article>
           `
-      )
-      .join("")}
+            )
+            .join("")}
         </div>
       </section>
 
