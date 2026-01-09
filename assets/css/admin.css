@@ -661,3 +661,45 @@ body.bg-black {
 .admin-btn-outline-small:active {
   background: #e5e7eb;
 }
+
+
+.admin-table-actions {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.admin-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid #27272a;
+  background: #020617;
+  color: #e5e7eb;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.admin-icon-btn span {
+  line-height: 1;
+}
+
+.admin-icon-btn:hover {
+  background: #111827;
+  border-color: #4b5563;
+  transform: translateY(-1px);
+}
+
+.admin-icon-btn-danger {
+  border-color: rgba(248, 113, 113, 0.4);
+  color: #fecaca;
+}
+
+.admin-icon-btn-danger:hover {
+  background: rgba(248, 113, 113, 0.12);
+  border-color: rgba(248, 113, 113, 0.8);
+}
