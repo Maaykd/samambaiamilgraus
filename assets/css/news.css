@@ -345,7 +345,16 @@
 .news-detail {
   max-width: 840px;
   margin: 0 auto;
-  padding: 6rem 1rem 3rem;
+  padding: 6rem 1rem 3.5rem;
+}
+
+.news-detail__content-card {
+  background: radial-gradient(circle at top, rgba(24,24,27,0.7), transparent),
+              #020617;
+  border-radius: 1.5rem;
+  border: 1px solid #27272a;
+  padding: 1.75rem 1.8rem 2rem;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75);
 }
 
 .news-detail__header {
@@ -388,6 +397,7 @@
 }
 
 .news-detail__content {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 1.02rem;
   line-height: 1.8;
   color: #e5e7eb;
@@ -397,6 +407,10 @@
 
 .news-detail__content p {
   margin-bottom: 1rem;
+}
+
+.news-detail__content p:last-child {
+  margin-bottom: 0;
 }
 
 /* Mais notícias (detalhe) */

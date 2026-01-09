@@ -166,19 +166,19 @@ async function renderNewsList(rootId) {
       <h3 class="news-sidebar__title">Mais lidas</h3>
       <ul class="news-sidebar__list">
         ${allNews.slice(0, 3)
-          .map(
-            (n) => `
+      .map(
+        (n) => `
           <li class="news-sidebar__item">
             <a href="news.html?id=${n.id}">
               <span class="news-sidebar__item-title">${n.title || ""}</span>
               <span class="news-sidebar__item-date">${formatDate(
-                n.created_at
-              )}</span>
+          n.created_at
+        )}</span>
             </a>
           </li>
         `
-          )
-          .join("")}
+      )
+      .join("")}
       </ul>
     </aside>
   `;
@@ -297,16 +297,18 @@ async function renderNewsDetail(rootId, newsId) {
         />
       </div>
 
-      <section class="news-detail__content">
-        ${news.content || ""}
-      </section>
+      <section class="news-detail__content-card">
+  <div class="news-detail__content">
+    ${news.content || ""}
+  </div>
+</section>
 
       <section class="news-more">
         <h2 class="news-more__title">Mais notícias</h2>
         <div class="news-more__list">
           ${moreNews
-            .map(
-              (n) => `
+      .map(
+        (n) => `
             <article class="news-card news-card--compact">
               <div class="news-card__image-wrapper">
                 <img
@@ -325,8 +327,8 @@ async function renderNewsDetail(rootId, newsId) {
               </div>
             </article>
           `
-            )
-            .join("")}
+      )
+      .join("")}
         </div>
       </section>
 
