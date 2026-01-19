@@ -1,6 +1,6 @@
 // assets/js/components/adminProducts.js
 
-import { db } from "../firebase.js";
+import { db, storage } from "../firebase.js";
 import {
   collection,
   addDoc,
@@ -9,6 +9,11 @@ import {
   deleteDoc,
   doc,
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 import { getPriceNumber, formatCurrency } from "../utils/format.js";
 
 const CATEGORY_LABELS = {
@@ -73,6 +78,7 @@ export function renderAdminProductsManager(container) {
     const priceEl = box.querySelector("#prod-price");
     const descEl = box.querySelector("#prod-description");
     const imageEl = box.querySelector("#prod-image");
+    const fileEl = box.querySelector("#prod-image-file");
     const catEl = box.querySelector("#prod-category");
     const statusEl = box.querySelector("#prod-form-status");
 
@@ -80,6 +86,7 @@ export function renderAdminProductsManager(container) {
     priceEl.value = "";
     descEl.value = "";
     imageEl.value = "";
+    if (fileEl) fileEl.value = "";
     catEl.value = "outros";
     editingProductId = null;
     statusEl.textContent = "";
@@ -92,6 +99,7 @@ export function renderAdminProductsManager(container) {
     const priceEl = box.querySelector("#prod-price");
     const descEl = box.querySelector("#prod-description");
     const imageEl = box.querySelector("#prod-image");
+    const fileEl = box.querySelector("#prod-image-file");
     const catEl = box.querySelector("#prod-category");
     const statusEl = box.querySelector("#prod-form-status");
 
@@ -100,6 +108,7 @@ export function renderAdminProductsManager(container) {
       product.price != null ? String(product.price).replace(".", ",") : "";
     descEl.value = product.description || "";
     imageEl.value = product.image_url || "";
+    if (fileEl) fileEl.value = "";
     catEl.value = product.category || "outros";
     editingProductId = product.id;
     statusEl.textContent = "Editando produto...";
@@ -125,6 +134,13 @@ export function renderAdminProductsManager(container) {
       <div class="admin-field-group">
         <label class="admin-label">URL da Imagem</label>
         <input id="prod-image" class="admin-input-full" placeholder="https://..." />
+        <small class="admin-help-text">
+          Você pode colar uma URL manual ou selecionar um arquivo abaixo para enviar ao Storage.
+        </small>
+      </div>
+      <div class="admin-field-group">
+        <label class="admin-label">Upload de Imagem</label>
+        <input id="prod-image-file" type="file" accept="image/*" class="admin-input-full" />
       </div>
       <div class="admin-field-group">
         <label class="admin-label">Categoria</label>
@@ -150,6 +166,7 @@ export function renderAdminProductsManager(container) {
     const priceEl = box.querySelector("#prod-price");
     const descEl = box.querySelector("#prod-description");
     const imageEl = box.querySelector("#prod-image");
+    const fileEl = box.querySelector("#prod-image-file");
     const catEl = box.querySelector("#prod-category");
     const statusEl = box.querySelector("#prod-form-status");
     const submitBtn = box.querySelector("#prod-submit-btn");
@@ -164,18 +181,32 @@ export function renderAdminProductsManager(container) {
         return;
       }
 
-      const prodData = {
-        name,
-        description: descEl.value.trim(),
-        price: priceNumber,
-        image_url: imageEl.value.trim(),
-        category: catEl.value || "outros",
-        active: true,
-      };
-
       statusEl.textContent = "Salvando...";
 
       try {
+        // Decide a imagem: começa pela URL digitada
+        let imageUrl = imageEl.value.trim();
+
+        // Se tiver arquivo selecionado, faz upload e sobrescreve imageUrl
+        if (fileEl && fileEl.files && fileEl.files[0]) {
+          const file = fileEl.files[0];
+          const safeName = file.name.toLowerCase().replace(/\s+/g, "-");
+          const path = `productImages/${Date.now()}-${safeName}`;
+          const storageRef = ref(storage, path);
+
+          await uploadBytes(storageRef, file);
+          imageUrl = await getDownloadURL(storageRef);
+        }
+
+        const prodData = {
+          name,
+          description: descEl.value.trim(),
+          price: priceNumber,
+          image_url: imageUrl,
+          category: catEl.value || "outros",
+          active: true,
+        };
+
         if (!editingProductId) {
           // Criar novo
           const docRef = await addDoc(collection(db, "products"), prodData);

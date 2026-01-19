@@ -190,20 +190,20 @@ async function renderNewsList(rootId) {
       <h3 class="news-sidebar__title">Mais lidas</h3>
       <ul class="news-sidebar__list">
         ${allNews
-          .slice(0, 3)
-          .map(
-            (n) => `
+      .slice(0, 3)
+      .map(
+        (n) => `
           <li class="news-sidebar__item">
             <a href="news.html?id=${n.id}">
               <span class="news-sidebar__item-title">${n.title || ""}</span>
               <span class="news-sidebar__item-date">${formatDate(
-                n.created_at
-              )}</span>
+          n.created_at
+        )}</span>
             </a>
           </li>
         `
-          )
-          .join("")}
+      )
+      .join("")}
       </ul>
     </aside>
   `;
@@ -216,10 +216,10 @@ async function renderNewsList(rootId) {
             <span class="news-hero-badge-icon">📰</span>
             <span>Últimas notícias</span>
           </div>
-          <h1 class="news-hero-title">
-            Notícias de
-            <span>Samambaia</span>
-          </h1>
+          <h1 class="news-hero__title">
+  <span class="news-hero__title-line news-hero__title-portal">PORTAL</span>
+  <span class="news-hero__title-line news-hero__title-mil-graus">MIL GRAUS</span>
+</h1>
           <p class="news-hero-subtitle">
             Os principais acontecimentos da cidade, com a cara do Samambaia Mil Graus.
           </p>
@@ -310,29 +310,26 @@ async function renderNewsDetail(rootId, newsId) {
     ? `
       <div class="news-source">
         <span class="news-source-label">Fonte</span>
-        ${
-          news.source_name
-            ? `<span class="news-source-text">${news.source_name}</span>`
-            : ""
-        }
-        ${
-          news.source_instagram
-            ? `<a
+        ${news.source_name
+      ? `<span class="news-source-text">${news.source_name}</span>`
+      : ""
+    }
+        ${news.source_instagram
+      ? `<a
                   href="https://instagram.com/${news.source_instagram.replace(
-                    /^@/,
-                    ""
-                  )}"
+        /^@/,
+        ""
+      )}"
                   class="news-source-link"
                   target="_blank"
                   rel="noopener noreferrer"
                >
                   @${news.source_instagram.replace(/^@/, "")}
                </a>`
-            : ""
-        }
-        ${
-          news.source_url
-            ? `<a
+      : ""
+    }
+        ${news.source_url
+      ? `<a
                   href="${news.source_url}"
                   class="news-source-link"
                   target="_blank"
@@ -340,8 +337,8 @@ async function renderNewsDetail(rootId, newsId) {
                >
                   Ver publicação
                </a>`
-            : ""
-        }
+      : ""
+    }
       </div>
     `
     : "";
@@ -378,8 +375,8 @@ async function renderNewsDetail(rootId, newsId) {
         <h2 class="news-more__title">Mais notícias</h2>
         <div class="news-more__list">
           ${moreNews
-            .map(
-              (n) => `
+      .map(
+        (n) => `
             <article class="news-card news-card--compact">
               <div class="news-card__image-wrapper">
                 <img
@@ -398,8 +395,8 @@ async function renderNewsDetail(rootId, newsId) {
               </div>
             </article>
           `
-            )
-            .join("")}
+      )
+      .join("")}
         </div>
       </section>
 

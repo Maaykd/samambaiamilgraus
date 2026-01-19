@@ -8,6 +8,38 @@
     radial-gradient(circle at bottom left, rgba(249, 115, 22, 0.06), transparent),
     linear-gradient(to bottom right, #020617, #000000);
 }
+.news-hero__title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem; /* ajusta o espaçamento entre as linhas */
+}
+
+/* linha genérica */
+.news-hero__title-line {
+  display: block;
+}
+
+/* PORTAL em amarelo da identidade */
+.news-hero__title-portal {
+  color: #ffb428;
+  font-size: 4rem;              /* ou o tamanho que você já definiu */
+  letter-spacing: 0.16em;       /* abre mais as letras */
+  font-weight: 900;             /* força o peso mais grosso da família atual */
+  text-shadow:                   /* truquezinho pra engrossar */
+    -1px 0 #ffb428,
+     1px 0 #ffb428,
+     0 -1px #ffb428,
+     0 1px #ffb428;
+}
+
+/* MIL GRAUS com a fonte especial */
+.news-hero__title-mil-graus {
+  font-family: "PricedownGTA", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+    font-size: 5rem;        /* aumenta aqui: testa 4rem, 4.5rem, 5rem */
+   line-height: 0.9;
+}
 
 /* ===== HERO ===== */
 
@@ -524,3 +556,4 @@
 .news-source-link:hover {
   text-decoration: underline;
 }
+
