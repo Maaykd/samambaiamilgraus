@@ -3,6 +3,7 @@ import { renderAdminContentManager } from "../components/adminContent.js";
 import { renderAdminProductsManager } from "../components/adminProducts.js";
 import { renderAdminSponsorsManager } from "../components/adminSponsors.js";
 import { renderAdminNewsManager } from "../components/adminNews.js"; // NOVO
+import { renderAdminAdsManager } from "../components/adminAds.js"; // <= NOVO
 import { auth } from "../firebase.js";
 
 import {
@@ -152,6 +153,7 @@ function renderAdminPanel(root, user) {
             <button class="admin-tab-btn" data-tab="products">Produtos</button>
             <button class="admin-tab-btn" data-tab="sponsors">Patrocinadores</button>
             <button class="admin-tab-btn" data-tab="news">Notícias</button>
+            <button class="admin-tab-btn" data-tab="ads">Propagandas</button>
           </div>
 
           <div class="admin-tabs-content">
@@ -170,6 +172,10 @@ function renderAdminPanel(root, user) {
             <div data-tab-panel="news" style="display:none">
               <div class="admin-card" id="admin-news-panel"></div>
             </div>
+
+            <div data-tab-panel="ads" style="display:none">
+              <div class="admin-card" id="admin-ads-panel"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -187,6 +193,10 @@ function renderAdminPanel(root, user) {
 
   const newsPanel = root.querySelector("#admin-news-panel");
   if (newsPanel) renderAdminNewsManager(newsPanel);
+
+  const adsPanel = root.querySelector("#admin-ads-panel");      // <= NOVO
+  if (adsPanel) renderAdminAdsManager(adsPanel);                // <= NOVO
+
 
   // Logout
   const logoutBtn = document.getElementById("admin-logout-btn");

@@ -9,7 +9,7 @@ import {
   doc,
   query,
   where,
-  orderBy
+  orderBy,
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 const CATEGORIES = [
@@ -20,7 +20,7 @@ const CATEGORIES = [
   "Cultura",
   "Esportes",
   "Entretenimento",
-  "Geral"
+  "Geral",
 ];
 
 // mapa categoria salvo → label exibida
@@ -31,8 +31,64 @@ const CATEGORY_LABELS = {
   cultura: "Cultura",
   esportes: "Esportes",
   entretenimento: "Entretenimento",
-  geral: "Geral"
+  geral: "Geral",
 };
+
+// ----------------------------
+// ADS – helpers
+// ----------------------------
+
+async function fetchAdsByPosition(position) {
+  const col = collection(db, "ads");
+  const q = query(
+    col,
+    where("active", "==", true),
+    where("position", "==", position),
+    orderBy("created_at", "desc")
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+function renderAdCard(ad) {
+  if (!ad || !ad.image_url) return "";
+
+  const hasDescription = ad.description && ad.description.trim().length > 0;
+  const hasLink = ad.link && ad.link.trim().length > 0;
+  const onclick = hasLink
+    ? `onclick="window.open('${ad.link}', '_blank')"`
+    : "";
+
+  return `
+    <article class="news-ad-card" ${onclick}>
+      <div
+        class="news-ad-card-bg"
+        style="background-image: url('${ad.image_url}');"
+      ></div>
+      <div class="news-ad-card-overlay"></div>
+      <div class="news-ad-card-content">
+        <span class="news-ad-badge">PUBLICIDADE</span>
+        <h2 class="news-ad-title">${ad.title || ""}</h2>
+        ${
+          hasDescription
+            ? `<p class="news-ad-description">${ad.description}</p>`
+            : ""
+        }
+        ${
+          hasLink
+            ? `<button class="news-ad-button" type="button">
+                 <span>Saiba mais →</span>
+               </button>`
+            : ""
+        }
+      </div>
+    </article>
+  `;
+}
+
+// ----------------------------
+// NEWS
+// ----------------------------
 
 async function fetchPublishedNews() {
   const col = collection(db, "news");
@@ -50,7 +106,7 @@ async function fetchPublishedNews() {
       id: d.id,
       ...data,
       category_raw: rawCat,
-      category_label: label
+      category_label: label,
     };
   });
 }
@@ -61,7 +117,7 @@ function formatDate(ts) {
   return d.toLocaleDateString("pt-BR", {
     day: "2-digit",
     month: "2-digit",
-    year: "numeric"
+    year: "numeric",
   });
 }
 
@@ -107,7 +163,12 @@ async function renderNewsList(rootId) {
 
   const selectedCategory = getSelectedCategory();
 
-  let allNews = await fetchPublishedNews();
+  const [allNews, topAds, middleAds, bottomAds] = await Promise.all([
+    fetchPublishedNews(),
+    fetchAdsByPosition("top"),
+    fetchAdsByPosition("middle"),
+    fetchAdsByPosition("bottom"),
+  ]);
 
   const filtered =
     selectedCategory === "Todas"
@@ -158,9 +219,14 @@ async function renderNewsList(rootId) {
       <p class="news-empty">Nenhuma notícia encontrada para esta categoria.</p>
     `;
 
-  const listHtml = rest
-    .map(
-      (n) => `
+  // insere anúncio de "middle" depois do 3º card, se houver
+  let listHtml = "";
+  rest.forEach((n, index) => {
+    if (index === 3 && middleAds[0]) {
+      listHtml += renderAdCard(middleAds[0]);
+    }
+
+    listHtml += `
       <article class="news-card" data-id="${n.id}">
         <div class="news-card__image-wrapper">
           <img
@@ -181,32 +247,34 @@ async function renderNewsList(rootId) {
           </div>
         </div>
       </article>
-    `
-    )
-    .join("");
+    `;
+  });
 
   const sidebarHtml = `
     <aside class="news-sidebar">
       <h3 class="news-sidebar__title">Mais lidas</h3>
       <ul class="news-sidebar__list">
         ${allNews
-      .slice(0, 3)
-      .map(
-        (n) => `
+          .slice(0, 3)
+          .map(
+            (n) => `
           <li class="news-sidebar__item">
             <a href="news.html?id=${n.id}">
               <span class="news-sidebar__item-title">${n.title || ""}</span>
               <span class="news-sidebar__item-date">${formatDate(
-          n.created_at
-        )}</span>
+                n.created_at
+              )}</span>
             </a>
           </li>
         `
-      )
-      .join("")}
+          )
+          .join("")}
       </ul>
     </aside>
   `;
+
+  const topAdHtml = topAds[0] ? renderAdCard(topAds[0]) : "";
+  const bottomAdHtml = bottomAds[0] ? renderAdCard(bottomAds[0]) : "";
 
   root.innerHTML = `
     <div class="news-page">
@@ -217,33 +285,38 @@ async function renderNewsList(rootId) {
             <span>Últimas notícias</span>
           </div>
           <h1 class="news-hero__title">
-  <span class="news-hero__title-line news-hero__title-portal">PORTAL</span>
-  <span class="news-hero__title-line news-hero__title-mil-graus">MIL GRAUS</span>
-</h1>
+            <span class="news-hero__title-line news-hero__title-portal">PORTAL</span>
+            <span class="news-hero__title-line news-hero__title-mil-graus">MIL GRAUS</span>
+          </h1>
           <p class="news-hero-subtitle">
             Os principais acontecimentos da cidade, com a cara do Samambaia Mil Graus.
           </p>
         </div>
       </section>
 
-      <section class="news-filters-bar">
-        <div class="news-filters-inner">
-          <span class="news-filters-icon">⚙️</span>
-          ${categoriesHtml}
-        </div>
+
       </section>
 
-      <section class="news-grid-section">
-        <div class="news-grid-inner">
-          <div class="news-grid">
-            ${featuredHtml}
-            ${listHtml}
-          </div>
-          ${sidebarHtml}
+    <section class="news-filters-bar">
+      <div class="news-filters-inner">
+        <span class="news-filters-icon"></span>
+        ${categoriesHtml}
+      </div>
+    </section>
+
+    <section class="news-grid-section">
+      <div class="news-grid-inner">
+        <div class="news-grid">
+          ${topAdHtml}
+          ${featuredHtml}
+          ${listHtml}
+          ${bottomAdHtml}
         </div>
-      </section>
-    </div>
-  `;
+        ${sidebarHtml}
+      </div>
+    </section>
+  </div>
+`;
 
   const tabs = root.querySelectorAll(".news-tab");
   tabs.forEach((tab) => {
@@ -269,7 +342,7 @@ async function renderNewsList(rootId) {
   });
 }
 
-// detalhe
+// detalhe (inalterado, só mantido)
 async function renderNewsDetail(rootId, newsId) {
   const root = document.getElementById(rootId);
   if (!root) return;
@@ -295,7 +368,7 @@ async function renderNewsDetail(rootId, newsId) {
     id: snap.id,
     ...data,
     category_raw: rawCat,
-    category_label: label
+    category_label: label,
   };
 
   const allNews = await fetchPublishedNews();
@@ -310,26 +383,29 @@ async function renderNewsDetail(rootId, newsId) {
     ? `
       <div class="news-source">
         <span class="news-source-label">Fonte</span>
-        ${news.source_name
-      ? `<span class="news-source-text">${news.source_name}</span>`
-      : ""
-    }
-        ${news.source_instagram
-      ? `<a
+        ${
+          news.source_name
+            ? `<span class="news-source-text">${news.source_name}</span>`
+            : ""
+        }
+        ${
+          news.source_instagram
+            ? `<a
                   href="https://instagram.com/${news.source_instagram.replace(
-        /^@/,
-        ""
-      )}"
+                    /^@/,
+                    ""
+                  )}"
                   class="news-source-link"
                   target="_blank"
                   rel="noopener noreferrer"
                >
                   @${news.source_instagram.replace(/^@/, "")}
                </a>`
-      : ""
-    }
-        ${news.source_url
-      ? `<a
+            : ""
+        }
+        ${
+          news.source_url
+            ? `<a
                   href="${news.source_url}"
                   class="news-source-link"
                   target="_blank"
@@ -337,8 +413,8 @@ async function renderNewsDetail(rootId, newsId) {
                >
                   Ver publicação
                </a>`
-      : ""
-    }
+            : ""
+        }
       </div>
     `
     : "";
@@ -375,8 +451,8 @@ async function renderNewsDetail(rootId, newsId) {
         <h2 class="news-more__title">Mais notícias</h2>
         <div class="news-more__list">
           ${moreNews
-      .map(
-        (n) => `
+            .map(
+              (n) => `
             <article class="news-card news-card--compact">
               <div class="news-card__image-wrapper">
                 <img
@@ -395,8 +471,8 @@ async function renderNewsDetail(rootId, newsId) {
               </div>
             </article>
           `
-      )
-      .join("")}
+            )
+            .join("")}
         </div>
       </section>
 
