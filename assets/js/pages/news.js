@@ -224,16 +224,27 @@ async function renderNewsList(rootId) {
   const categoriesHtml = CATEGORIES.map((cat) => {
     const active = cat === selectedCategory ? "news-tab--active" : "";
     return `
-      <button
-        class="news-tab ${active}"
-        data-category="${cat}"
-      >
-        ${cat}
-      </button>
-    `;
+    <button
+      class="news-tab ${active}"
+      data-category="${cat}"
+    >
+      ${cat}
+    </button>
+  `;
   }).join("");
 
-  const [featured, ...rest] = filtered;
+  // === escolhe a notícia em destaque (card maior) ===
+
+  // 1) tenta achar uma notícia marcada como Principal no admin
+  let featured = filtered.find((n) => n.featured);
+
+  // 2) se não tiver nenhuma Principal, usa a primeira da lista como fallback
+  if (!featured && filtered.length > 0) {
+    featured = filtered[0];
+  }
+
+  // 3) o restante são todas as outras, exceto a featured
+  const rest = featured ? filtered.filter((n) => n.id !== featured.id) : [];
 
   const featuredHtml = featured
     ? `
@@ -566,7 +577,7 @@ async function renderNewsDetail(rootId, newsId) {
           ${moreNews
             .map(
               (n) => `
-            <article class="news-card news-card--compact">
+            <article class="news-card news-card--compact" data-id="${n.id}">
               <div class="news-card__image-wrapper">
                 <img
                   src="${n.image_url || ""}"
@@ -592,6 +603,18 @@ async function renderNewsDetail(rootId, newsId) {
       <a href="news.html" class="news-back-link">Voltar para todas as notícias</a>
     </article>
   `;
+
+  // clique nos mini cards de "Mais notícias"
+  const moreCards = root.querySelectorAll(
+    ".news-more__list .news-card--compact"
+  );
+  moreCards.forEach((card) => {
+    card.addEventListener("click", () => {
+      const id = card.getAttribute("data-id");
+      if (!id) return;
+      window.location.href = `news.html?id=${id}`;
+    });
+  });
 }
 
 // bootstrap
