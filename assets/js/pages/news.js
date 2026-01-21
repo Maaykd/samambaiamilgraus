@@ -88,6 +88,51 @@ function renderAdCard(ad, options = {}) {
   `;
 }
 
+// carrossel de ads (topo / final)
+function renderAdsCarousel(ads, options = {}) {
+  if (!ads || ads.length === 0) return "";
+
+  const variant = options.variant || "full";
+
+  // se só tiver um, não precisa de carrossel
+  if (ads.length === 1) {
+    return renderAdCard(ads[0], { variant });
+  }
+
+  const slidesHtml = ads
+    .map((ad, index) => {
+      const activeClass = index === 0 ? "news-ad-slide--active" : "";
+      return `
+        <div class="news-ad-slide ${activeClass}" data-ad-index="${index}">
+          ${renderAdCard(ad, { variant })}
+        </div>
+      `;
+    })
+    .join("");
+
+  return `
+    <div class="news-ad-carousel" data-ad-count="${ads.length}">
+      <button
+        class="news-ad-nav news-ad-nav--prev"
+        type="button"
+        aria-label="Anterior"
+      >
+        ‹
+      </button>
+      <div class="news-ad-carousel-inner">
+        ${slidesHtml}
+      </div>
+      <button
+        class="news-ad-nav news-ad-nav--next"
+        type="button"
+        aria-label="Próximo"
+      >
+        ›
+      </button>
+    </div>
+  `;
+}
+
 // ----------------------------
 // NEWS
 // ----------------------------
@@ -143,7 +188,6 @@ function formatContentToHtml(raw) {
   if (!raw) return "";
   const trimmed = raw.trim();
 
-  // separa por blocos com linha em branco
   const paragraphs = trimmed.split(/\n\s*\n/);
 
   return paragraphs
@@ -225,7 +269,6 @@ async function renderNewsList(rootId) {
 
   let listHtml = "";
   rest.forEach((n, index) => {
-    // primeiro encaixa a notícia
     listHtml += `
       <article class="news-card" data-id="${n.id}">
         <div class="news-card__image-wrapper">
@@ -249,7 +292,7 @@ async function renderNewsList(rootId) {
       </article>
     `;
 
-    // depois do segundo card comum, insere o anúncio de meio
+    // depois do segundo card comum, insere o anúncio de meio (card simples)
     if (index === 1 && middleAd) {
       listHtml += renderAdCard(middleAd, { variant: "middle" });
     }
@@ -278,10 +321,15 @@ async function renderNewsList(rootId) {
     </aside>
   `;
 
-  const topAdHtml = topAds[0] ? renderAdCard(topAds[0], { variant: "full" }) : "";
-  const bottomAdHtml = bottomAds[0]
-    ? renderAdCard(bottomAds[0], { variant: "full" })
-    : "";
+  const topAdHtml =
+    topAds && topAds.length > 0
+      ? renderAdsCarousel(topAds, { variant: "full" })
+      : "";
+
+  const bottomAdHtml =
+    bottomAds && bottomAds.length > 0
+      ? renderAdsCarousel(bottomAds, { variant: "full" })
+      : "";
 
   root.innerHTML = `
     <div class="news-page">
@@ -322,6 +370,7 @@ async function renderNewsList(rootId) {
     </div>
   `;
 
+  // tabs
   const tabs = root.querySelectorAll(".news-tab");
   tabs.forEach((tab) => {
     tab.addEventListener("click", () => {
@@ -336,6 +385,7 @@ async function renderNewsList(rootId) {
     });
   });
 
+  // cards
   const cards = root.querySelectorAll(".news-card");
   cards.forEach((card) => {
     card.addEventListener("click", () => {
@@ -343,6 +393,65 @@ async function renderNewsList(rootId) {
       if (!id) return;
       window.location.href = `news.html?id=${id}`;
     });
+  });
+
+  // inicializa carrosséis de ads (topo e final)
+  const carousels = root.querySelectorAll(".news-ad-carousel");
+  carousels.forEach((carousel) => {
+    const slides = carousel.querySelectorAll(".news-ad-slide");
+    if (!slides.length) return;
+
+    let index = 0;
+    const total = slides.length;
+    let timer = null;
+
+    const showSlide = (i) => {
+      slides.forEach((slide, idx) => {
+        slide.classList.toggle("news-ad-slide--active", idx === i);
+      });
+      index = i;
+    };
+
+    const next = () => showSlide((index + 1) % total);
+    const prev = () => showSlide((index - 1 + total) % total);
+
+    const btnNext = carousel.querySelector(".news-ad-nav--next");
+    const btnPrev = carousel.querySelector(".news-ad-nav--prev");
+
+    if (btnNext) {
+      btnNext.addEventListener("click", (e) => {
+        e.stopPropagation();
+        next();
+        restartTimer();
+      });
+    }
+
+    if (btnPrev) {
+      btnPrev.addEventListener("click", (e) => {
+        e.stopPropagation();
+        prev();
+        restartTimer();
+      });
+    }
+
+    const startTimer = () => {
+      if (timer) clearInterval(timer);
+      timer = setInterval(next, 7000); // 7s
+    };
+
+    const restartTimer = () => {
+      if (total <= 1) return;
+      startTimer();
+    };
+
+    carousel.addEventListener("mouseenter", () => {
+      if (timer) clearInterval(timer);
+    });
+    carousel.addEventListener("mouseleave", () => {
+      if (total > 1) startTimer();
+    });
+
+    if (total > 1) startTimer();
   });
 }
 
