@@ -3,14 +3,44 @@ import { renderAdminContentManager } from "../components/adminContent.js";
 import { renderAdminProductsManager } from "../components/adminProducts.js";
 import { renderAdminSponsorsManager } from "../components/adminSponsors.js";
 import { renderAdminNewsManager } from "../components/adminNews.js"; // NOVO
-import { renderAdminAdsManager } from "../components/adminAds.js"; // <= NOVO
-import { auth } from "../firebase.js";
+import { renderAdminAdsManager } from "../components/adminAds.js"; // NOVO
+import { auth, db } from "../firebase.js";
 
 import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
   signOut,
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+
+import {
+  doc,
+  getDoc,
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+// Se você já tiver esse componente pronto, ajuste o caminho do import:
+// import { renderUserNotRegisteredError } from "../components/userNotRegisteredError.js";
+
+/**
+ * Fallback simples de "usuário não autorizado" caso não exista componente pronto.
+ * Se já existir userNotRegisteredError.js exportando a função,
+ * pode remover essa função e usar o import acima no lugar.
+ */
+function renderUserNotRegisteredError(rootId) {
+  const root = document.getElementById(rootId);
+  if (!root) return;
+
+  root.innerHTML = `
+    <div class="admin-login-wrapper">
+      <div class="admin-card">
+        <h2>Acesso não autorizado</h2>
+        <p>Seu usuário não está autorizado a acessar o painel administrativo.</p>
+        <a href="${createPageUrl("Home")}">
+          <button class="admin-btn-ghost">← Voltar ao Site</button>
+        </a>
+      </div>
+    </div>
+  `;
+}
 
 // Helpers de navegação
 function createPageUrl(name) {
@@ -22,7 +52,7 @@ function createPageUrl(name) {
 /**
  * LOGIN
  * Tela de login com email + senha usando Firebase Auth.
- * Só usuários cadastrados no console (ou futuramente via painel) conseguem entrar.
+ * Só usuários cadastrados no console (e com role admin em /users) conseguem entrar.
  */
 function renderLogin(root) {
   root.innerHTML = `
@@ -100,7 +130,7 @@ function renderLogin(root) {
     try {
       // Login via Firebase Auth
       await signInWithEmailAndPassword(auth, email, password);
-      // onAuthStateChanged vai disparar e chamar renderAdminPanel
+      // onAuthStateChanged vai disparar e tratar permissão
     } catch (err) {
       console.error("Erro ao fazer login:", err);
 
@@ -109,7 +139,11 @@ function renderLogin(root) {
         message = "E-mail inválido.";
       } else if (err.code === "auth/user-disabled") {
         message = "Usuário desativado. Fale com o administrador.";
-      } else if (err.code === "auth/user-not-found" || err.code === "auth/wrong-password" || err.code === "auth/invalid-credential") {
+      } else if (
+        err.code === "auth/user-not-found" ||
+        err.code === "auth/wrong-password" ||
+        err.code === "auth/invalid-credential"
+      ) {
         message = "E-mail ou senha incorretos.";
       }
 
@@ -121,7 +155,7 @@ function renderLogin(root) {
 
 /**
  * PAINEL ADMIN
- * Só deve ser exibido se houver usuário autenticado (controlado por onAuthStateChanged).
+ * Só deve ser exibido se houver usuário autenticado E autorizado (role admin).
  */
 function renderAdminPanel(root, user) {
   root.innerHTML = `
@@ -132,7 +166,11 @@ function renderAdminPanel(root, user) {
             <h1 class="admin-header-title">Painel Administrativo</h1>
             <p class="admin-header-sub">
               Gerencie o conteúdo do site
-              ${user && user.email ? ` – logado como <strong>${user.email}</strong>` : ""}
+              ${
+                user && user.email
+                  ? ` – logado como <strong>${user.email}</strong>`
+                  : ""
+              }
             </p>
           </div>
           <div class="admin-header-actions">
@@ -194,9 +232,8 @@ function renderAdminPanel(root, user) {
   const newsPanel = root.querySelector("#admin-news-panel");
   if (newsPanel) renderAdminNewsManager(newsPanel);
 
-  const adsPanel = root.querySelector("#admin-ads-panel");      // <= NOVO
-  if (adsPanel) renderAdminAdsManager(adsPanel);                // <= NOVO
-
+  const adsPanel = root.querySelector("#admin-ads-panel"); // NOVO
+  if (adsPanel) renderAdminAdsManager(adsPanel); // NOVO
 
   // Logout
   const logoutBtn = document.getElementById("admin-logout-btn");
@@ -232,8 +269,8 @@ function renderAdminPanel(root, user) {
 /**
  * INICIALIZAÇÃO DA PÁGINA
  * Usa onAuthStateChanged para proteger a rota:
- * - Se tiver usuário logado → mostra painel
- * - Se não tiver → mostra login
+ * - Se não tiver usuário → mostra login
+ * - Se tiver usuário → verifica role em /users/{uid}; só 'admin' entra
  */
 document.addEventListener("DOMContentLoaded", () => {
   const root = document.getElementById("admin-root");
@@ -248,11 +285,33 @@ document.addEventListener("DOMContentLoaded", () => {
     </div>
   `;
 
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      renderAdminPanel(root, user);
-    } else {
+  onAuthStateChanged(auth, async (user) => {
+    const rootId = "admin-root";
+
+    // Não logado → tela de login
+    if (!user) {
       renderLogin(root);
+      return;
+    }
+
+    try {
+      // Verifica documento em users/{uid}
+      const userDocRef = doc(db, "users", user.uid);
+      const snap = await getDoc(userDocRef);
+
+      if (!snap.exists() || snap.data().role !== "admin") {
+        console.warn("Usuário autenticado, mas sem role admin:", user.uid);
+        renderUserNotRegisteredError(rootId);
+        await signOut(auth);
+        return;
+      }
+
+      // Autorizado como admin → renderiza painel
+      renderAdminPanel(root, user);
+    } catch (err) {
+      console.error("Erro ao verificar role do usuário:", err);
+      renderUserNotRegisteredError(rootId);
+      await signOut(auth);
     }
   });
 });
