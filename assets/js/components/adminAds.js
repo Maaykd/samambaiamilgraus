@@ -82,13 +82,24 @@ export function renderAdminAdsManager(container) {
         <input id="ad-image-url" class="admin-input-full" placeholder="https://..." />
       </div>
 
-      <div class="admin-field-group">
+            <div class="admin-field-group">
         <label class="admin-label">Upload de Imagem</label>
-        <input id="ad-image-file" type="file" accept="image/*" class="admin-input-full" />
+        <input
+          id="ad-image-file"
+          type="file"
+          accept="image/*"
+          class="admin-input-full"
+        />
         <small class="admin-help-text">
           Você pode enviar um arquivo ou colar uma URL manual acima.
         </small>
+        <small class="admin-help-text">
+          Recomenda-se imagem horizontal 3:1
+          (mínimo 1200x400 px, ideal 1920x640 px).
+          Evite textos muito próximos das bordas.
+        </small>
       </div>
+
 
       <div class="admin-field-group">
         <label class="admin-label">Link de destino</label>
@@ -263,28 +274,25 @@ export function renderAdminAdsManager(container) {
         <div class="admin-card admin-ad-item" style="background:#18181b; border:1px solid #27272a;">
           <div class="admin-ad-main">
             <div class="admin-ad-thumb-wrapper">
-              ${
-                ad.image_url
-                  ? `<img src="${ad.image_url}" alt="${ad.title}" class="admin-ad-thumb" />`
-                  : `<div class="admin-ad-thumb admin-ad-thumb-placeholder"></div>`
-              }
+              ${ad.image_url
+            ? `<img src="${ad.image_url}" alt="${ad.title}" class="admin-ad-thumb" />`
+            : `<div class="admin-ad-thumb admin-ad-thumb-placeholder"></div>`
+          }
             </div>
             <div class="admin-ad-info">
               <h3>${ad.title || ""}</h3>
-              ${
-                ad.description
-                  ? `<p class="admin-ad-desc">${ad.description}</p>`
-                  : ""
-              }
+              ${ad.description
+            ? `<p class="admin-ad-desc">${ad.description}</p>`
+            : ""
+          }
               <div class="admin-ad-meta">
                 <span class="admin-ad-position-badge">
                   ${POSITION_LABELS[ad.position] || "Topo"}
                 </span>
-                ${
-                  ad.active === false
-                    ? `<span class="admin-ad-status inactive">Inativo</span>`
-                    : `<span class="admin-ad-status active">Ativo</span>`
-                }
+                ${ad.active === false
+            ? `<span class="admin-ad-status inactive">Inativo</span>`
+            : `<span class="admin-ad-status active">Ativo</span>`
+          }
               </div>
             </div>
           </div>
@@ -293,9 +301,8 @@ export function renderAdminAdsManager(container) {
               Editar
             </button>
             <label class="admin-ad-switch-label">
-              <input type="checkbox" data-action="toggle" data-id="${ad.id}" ${
-          ad.active !== false ? "checked" : ""
-        } />
+              <input type="checkbox" data-action="toggle" data-id="${ad.id}" ${ad.active !== false ? "checked" : ""
+          } />
               <span>Ativo</span>
             </label>
             <button data-action="delete" data-id="${ad.id}" class="admin-btn-small admin-ad-delete-btn">

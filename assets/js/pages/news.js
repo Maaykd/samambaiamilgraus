@@ -50,17 +50,19 @@ async function fetchAdsByPosition(position) {
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 
-function renderAdCard(ad) {
+function renderAdCard(ad, options = {}) {
   if (!ad || !ad.image_url) return "";
 
+  const variant = options.variant || "full";
   const hasDescription = ad.description && ad.description.trim().length > 0;
   const hasLink = ad.link && ad.link.trim().length > 0;
-  const onclick = hasLink
-    ? `onclick="window.open('${ad.link}', '_blank')"`
-    : "";
+  const onclick = hasLink ? `onclick="window.open('${ad.link}', '_blank')"` : "";
+
+  const extraClass =
+    variant === "middle" ? "news-ad-card--middle" : "news-ad-card--full";
 
   return `
-    <article class="news-ad-card" ${onclick}>
+    <article class="news-ad-card ${extraClass}" ${onclick}>
       <div
         class="news-ad-card-bg"
         style="background-image: url('${ad.image_url}');"
@@ -219,13 +221,11 @@ async function renderNewsList(rootId) {
       <p class="news-empty">Nenhuma notícia encontrada para esta categoria.</p>
     `;
 
-  // insere anúncio de "middle" depois do 3º card, se houver
+  const middleAd = middleAds[0] || null;
+
   let listHtml = "";
   rest.forEach((n, index) => {
-    if (index === 3 && middleAds[0]) {
-      listHtml += renderAdCard(middleAds[0]);
-    }
-
+    // primeiro encaixa a notícia
     listHtml += `
       <article class="news-card" data-id="${n.id}">
         <div class="news-card__image-wrapper">
@@ -248,6 +248,11 @@ async function renderNewsList(rootId) {
         </div>
       </article>
     `;
+
+    // depois do segundo card comum, insere o anúncio de meio
+    if (index === 1 && middleAd) {
+      listHtml += renderAdCard(middleAd, { variant: "middle" });
+    }
   });
 
   const sidebarHtml = `
@@ -273,8 +278,10 @@ async function renderNewsList(rootId) {
     </aside>
   `;
 
-  const topAdHtml = topAds[0] ? renderAdCard(topAds[0]) : "";
-  const bottomAdHtml = bottomAds[0] ? renderAdCard(bottomAds[0]) : "";
+  const topAdHtml = topAds[0] ? renderAdCard(topAds[0], { variant: "full" }) : "";
+  const bottomAdHtml = bottomAds[0]
+    ? renderAdCard(bottomAds[0], { variant: "full" })
+    : "";
 
   root.innerHTML = `
     <div class="news-page">
@@ -294,29 +301,26 @@ async function renderNewsList(rootId) {
         </div>
       </section>
 
-
+      <section class="news-filters-bar">
+        <div class="news-filters-inner">
+          <span class="news-filters-icon"></span>
+          ${categoriesHtml}
+        </div>
       </section>
 
-    <section class="news-filters-bar">
-      <div class="news-filters-inner">
-        <span class="news-filters-icon"></span>
-        ${categoriesHtml}
-      </div>
-    </section>
-
-    <section class="news-grid-section">
-      <div class="news-grid-inner">
-        <div class="news-grid">
-          ${topAdHtml}
-          ${featuredHtml}
-          ${listHtml}
-          ${bottomAdHtml}
+      <section class="news-grid-section">
+        <div class="news-grid-inner">
+          <div class="news-grid">
+            ${topAdHtml}
+            ${featuredHtml}
+            ${listHtml}
+            ${bottomAdHtml}
+          </div>
+          ${sidebarHtml}
         </div>
-        ${sidebarHtml}
-      </div>
-    </section>
-  </div>
-`;
+      </section>
+    </div>
+  `;
 
   const tabs = root.querySelectorAll(".news-tab");
   tabs.forEach((tab) => {
@@ -342,7 +346,7 @@ async function renderNewsList(rootId) {
   });
 }
 
-// detalhe (inalterado, só mantido)
+// detalhe
 async function renderNewsDetail(rootId, newsId) {
   const root = document.getElementById(rootId);
   if (!root) return;
