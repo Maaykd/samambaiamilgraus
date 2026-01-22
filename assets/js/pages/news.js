@@ -35,6 +35,57 @@ const CATEGORY_LABELS = {
 };
 
 // ----------------------------
+// STATE – filtros e paginação
+// ----------------------------
+
+let ALL_NEWS_CACHE = [];
+let FILTERED_NEWS_CACHE = [];
+
+const NEWS_PAGE_SIZE = 9;
+
+const newsFiltersState = {
+  search: "",
+  sort: "newest", // 'newest' | 'oldest'
+  page: 1,
+  category: "Todas",
+};
+
+
+function applyNewsFilters() {
+  const search = newsFiltersState.search.toLowerCase();
+  const sort = newsFiltersState.sort;
+  const category = newsFiltersState.category;
+
+  let list =
+    category === "Todas"
+      ? [...ALL_NEWS_CACHE]
+      : ALL_NEWS_CACHE.filter((n) => n.category_label === category);
+
+  if (search) {
+    list = list.filter((n) => {
+      const target = `${n.title || ""} ${n.subtitle || ""} ${n.summary || ""
+        } ${n.content || ""}`.toLowerCase();
+      return target.includes(search);
+    });
+  }
+
+  list.sort((a, b) => {
+    const da = a.created_at?.toDate ? a.created_at.toDate() : new Date(a.created_at);
+    const db = b.created_at?.toDate ? b.created_at.toDate() : new Date(b.created_at);
+    return sort === "oldest" ? da - db : db - da;
+  });
+
+  FILTERED_NEWS_CACHE = list;
+}
+
+function paginateNews() {
+  const start = (newsFiltersState.page - 1) * NEWS_PAGE_SIZE;
+  const end = start + NEWS_PAGE_SIZE;
+  return FILTERED_NEWS_CACHE.slice(start, end);
+}
+
+
+// ----------------------------
 // ADS – helpers
 // ----------------------------
 
@@ -71,18 +122,16 @@ function renderAdCard(ad, options = {}) {
       <div class="news-ad-card-content">
         <span class="news-ad-badge">PUBLICIDADE</span>
         <h2 class="news-ad-title">${ad.title || ""}</h2>
-        ${
-          hasDescription
-            ? `<p class="news-ad-description">${ad.description}</p>`
-            : ""
-        }
-        ${
-          hasLink
-            ? `<button class="news-ad-button" type="button">
+        ${hasDescription
+      ? `<p class="news-ad-description">${ad.description}</p>`
+      : ""
+    }
+        ${hasLink
+      ? `<button class="news-ad-button" type="button">
                  <span>Saiba mais →</span>
                </button>`
-            : ""
-        }
+      : ""
+    }
       </div>
     </article>
   `;
@@ -208,6 +257,9 @@ async function renderNewsList(rootId) {
   if (!root) return;
 
   const selectedCategory = getSelectedCategory();
+  newsFiltersState.category = selectedCategory;
+  newsFiltersState.page = 1;
+
 
   const [allNews, topAds, middleAds, bottomAds] = await Promise.all([
     fetchPublishedNews(),
@@ -216,10 +268,12 @@ async function renderNewsList(rootId) {
     fetchAdsByPosition("bottom"),
   ]);
 
-  const filtered =
-    selectedCategory === "Todas"
-      ? allNews
-      : allNews.filter((n) => n.category_label === selectedCategory);
+  ALL_NEWS_CACHE = allNews;
+  applyNewsFilters();
+  const filtered = FILTERED_NEWS_CACHE;
+  const paginated = paginateNews();
+  const totalPages = Math.max(1, Math.ceil(filtered.length / NEWS_PAGE_SIZE));
+
 
   const categoriesHtml = CATEGORIES.map((cat) => {
     const active = cat === selectedCategory ? "news-tab--active" : "";
@@ -236,15 +290,12 @@ async function renderNewsList(rootId) {
   // === escolhe a notícia em destaque (card maior) ===
 
   // 1) tenta achar uma notícia marcada como Principal no admin
-  let featured = filtered.find((n) => n.featured);
-
-  // 2) se não tiver nenhuma Principal, usa a primeira da lista como fallback
-  if (!featured && filtered.length > 0) {
-    featured = filtered[0];
+  let featured = paginated.find((n) => n.featured);
+  if (!featured && paginated.length > 0) {
+    featured = paginated[0];
   }
+  const rest = featured ? paginated.filter((n) => n.id !== featured.id) : [];
 
-  // 3) o restante são todas as outras, exceto a featured
-  const rest = featured ? filtered.filter((n) => n.id !== featured.id) : [];
 
   const featuredHtml = featured
     ? `
@@ -303,6 +354,8 @@ async function renderNewsList(rootId) {
       </article>
     `;
 
+
+
     // depois do segundo card comum, insere o anúncio de meio (card simples)
     if (index === 1 && middleAd) {
       listHtml += renderAdCard(middleAd, { variant: "middle" });
@@ -314,20 +367,20 @@ async function renderNewsList(rootId) {
       <h3 class="news-sidebar__title">Mais lidas</h3>
       <ul class="news-sidebar__list">
         ${allNews
-          .slice(0, 3)
-          .map(
-            (n) => `
+      .slice(0, 3)
+      .map(
+        (n) => `
           <li class="news-sidebar__item">
             <a href="news.html?id=${n.id}">
               <span class="news-sidebar__item-title">${n.title || ""}</span>
               <span class="news-sidebar__item-date">${formatDate(
-                n.created_at
-              )}</span>
+          n.created_at
+        )}</span>
             </a>
           </li>
         `
-          )
-          .join("")}
+      )
+      .join("")}
       </ul>
     </aside>
   `;
@@ -359,13 +412,41 @@ async function renderNewsList(rootId) {
           </p>
         </div>
       </section>
-
-      <section class="news-filters-bar">
+<section class="news-filters-bar">
         <div class="news-filters-inner">
-          <span class="news-filters-icon"></span>
-          ${categoriesHtml}
+          <div class="news-filters-top">
+            <div class="news-search-wrapper">
+              <span class="news-search-icon">
+                <i class="bi bi-search"></i>
+              </span>
+              <input
+                type="search"
+                id="news-search-input"
+                class="news-search-input"
+                placeholder="Buscar notícias..."
+              />
+            </div>
+
+            <div class="news-filters-top-right">
+              <button class="news-filters-toggle" type="button">
+                <span class="news-filters-toggle-icon">☰</span>
+                <span class="news-filters-toggle-label">Filtros</span>
+              </button>
+
+              <select id="news-sort-select" class="news-sort-select">
+                <option value="newest">Mais recentes</option>
+                <option value="oldest">Mais antigas</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="news-tabs-wrapper">
+            ${categoriesHtml}
+          </div>
         </div>
       </section>
+
+
 
       <section class="news-grid-section">
         <div class="news-grid-inner">
@@ -378,21 +459,42 @@ async function renderNewsList(rootId) {
           ${sidebarHtml}
         </div>
       </section>
+            <section class="news-pagination-section">
+        <div id="news-pagination" class="news-pagination"></div>
+      </section>
+
     </div>
   `;
 
   // tabs
-  const tabs = root.querySelectorAll(".news-tab");
+    const tabs = root.querySelectorAll(".news-tab");
   tabs.forEach((tab) => {
     tab.addEventListener("click", () => {
       const cat = tab.getAttribute("data-category");
-      const params = new URLSearchParams(window.location.search);
-      if (cat === "Todas") {
-        params.delete("category");
-      } else {
-        params.set("category", cat);
-      }
-      window.location.search = params.toString();
+      if (!cat || cat === newsFiltersState.category) return;
+
+      newsFiltersState.category = cat;
+      newsFiltersState.page = 1;
+
+      // atualiza visualmente a aba ativa
+      tabs.forEach((t) =>
+        t.classList.toggle(
+          "news-tab--active",
+          t.getAttribute("data-category") === cat
+        )
+      );
+
+      // mostra skeleton enquanto refaz a lista
+      renderNewsSkeleton();
+
+      applyNewsFilters();
+      const paginated = paginateNews();
+      reRenderNewsGrid(paginated);
+      const totalPagesLocal = Math.max(
+        1,
+        Math.ceil(FILTERED_NEWS_CACHE.length / NEWS_PAGE_SIZE)
+      );
+      renderNewsPagination(totalPagesLocal);
     });
   });
 
@@ -464,7 +566,213 @@ async function renderNewsList(rootId) {
 
     if (total > 1) startTimer();
   });
+
+   // inicializa filtros (busca + ordenação)
+  setupNewsFiltersUI(root, totalPages);
 }
+
+
+function renderNewsSkeleton() {
+  const grid = document.querySelector(".news-grid");
+  if (!grid) return;
+
+  grid.innerHTML = `
+    <div class="news-skeleton">
+      <div class="news-skeleton__card"></div>
+      <div class="news-skeleton__card"></div>
+      <div class="news-skeleton__card"></div>
+    </div>
+  `;
+}
+
+
+function renderNewsPagination(totalPages) {
+  const container = document.getElementById("news-pagination");
+  if (!container) return;
+
+  if (!FILTERED_NEWS_CACHE.length || totalPages <= 1) {
+    container.innerHTML = "";
+    return;
+  }
+
+  const current = newsFiltersState.page;
+  let html = "";
+
+  if (current > 1) {
+    html += `<button class="news-page-btn news-page-btn--nav" data-page="${current - 1
+      }">«</button>`;
+  }
+
+  for (let p = 1; p <= totalPages; p++) {
+    const activeClass = p === current ? "news-page-btn--active" : "";
+    html += `<button class="news-page-btn ${activeClass}" data-page="${p}">${p}</button>`;
+  }
+
+  if (current < totalPages) {
+    html += `<button class="news-page-btn news-page-btn--nav" data-page="${current + 1
+      }">»</button>`;
+  }
+
+  container.innerHTML = html;
+
+  container.querySelectorAll(".news-page-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const page = Number(btn.getAttribute("data-page"));
+      if (!page || page === newsFiltersState.page) return;
+      newsFiltersState.page = page;
+      applyNewsFilters();
+      const paginated = paginateNews();
+      reRenderNewsGrid(paginated);
+      const totalPagesLocal = Math.max(
+        1,
+        Math.ceil(FILTERED_NEWS_CACHE.length / NEWS_PAGE_SIZE)
+      );
+      renderNewsPagination(totalPagesLocal);
+    });
+  });
+}
+
+function reRenderNewsGrid(paginated) {
+  const grid = document.querySelector(".news-grid");
+  if (!grid) return;
+
+  // mantém os anúncios e sidebar como estão
+  const topAdHtml = grid.querySelector(".news-ad-carousel")
+    ? grid
+      .querySelectorAll(".news-ad-carousel")[0]
+      .outerHTML
+    : "";
+  const bottomAdHtml =
+    grid.querySelectorAll(".news-ad-carousel").length > 1
+      ? grid
+        .querySelectorAll(".news-ad-carousel")[1]
+        .outerHTML
+      : "";
+
+  // destaque + lista
+  let featured = paginated.find((n) => n.featured);
+  if (!featured && paginated.length > 0) {
+    featured = paginated[0];
+  }
+  const rest = featured ? paginated.filter((n) => n.id !== featured.id) : [];
+
+  const featuredHtml = featured
+    ? `
+      <article class="news-card news-card--featured" data-id="${featured.id}">
+        <div class="news-card__image-wrapper">
+          <img
+            src="${featured.image_url || ""}"
+            alt="${featured.title || ""}"
+            class="news-card__image"
+          />
+          <div class="news-card__overlay"></div>
+          <span class="news-badge news-badge--category">${featured.category_label}</span>
+          <span class="news-badge news-badge--featured">Destaque</span>
+        </div>
+        <div class="news-card__body">
+          <h2 class="news-card__title news-card__title--featured">
+            ${featured.title || ""}
+          </h2>
+          <p class="news-card__subtitle">${featured.subtitle || ""}</p>
+          <div class="news-meta">
+            <span>${formatDate(featured.created_at)}</span>
+            <span>•</span>
+            <span>${featured.author || "Bidô – Samambaia Mil Graus"}</span>
+          </div>
+        </div>
+      </article>
+    `
+    : `
+      <p class="news-empty">Nenhuma notícia encontrada para esta combinação de filtros.</p>
+    `;
+
+  let listHtml = "";
+  rest.forEach((n) => {
+    listHtml += `
+      <article class="news-card" data-id="${n.id}">
+        <div class="news-card__image-wrapper">
+          <img
+            src="${n.image_url || ""}"
+            alt="${n.title || ""}"
+            class="news-card__image"
+          />
+          <div class="news-card__overlay"></div>
+          <span class="news-badge news-badge--category">${n.category_label}</span>
+        </div>
+        <div class="news-card__body">
+          <h3 class="news-card__title">${n.title || ""}</h3>
+          <p class="news-card__subtitle">${n.summary || ""}</p>
+          <div class="news-meta">
+            <span>${formatDate(n.created_at)}</span>
+            <span>•</span>
+            <span>${n.author || "Bidô – Samambaia Mil Graus"}</span>
+          </div>
+        </div>
+      </article>
+    `;
+  });
+
+
+
+  grid.innerHTML = `
+    ${topAdHtml}
+    ${featuredHtml}
+    ${listHtml}
+    ${bottomAdHtml}
+  `;
+
+  // rebind de clique nos cards
+  const cards = grid.querySelectorAll(".news-card");
+  cards.forEach((card) => {
+    card.addEventListener("click", () => {
+      const id = card.getAttribute("data-id");
+      if (!id) return;
+      window.location.href = `news.html?id=${id}`;
+    });
+  });
+}
+
+function setupNewsFiltersUI(root, totalPages) {
+  const searchInput = root.querySelector("#news-search-input");
+  const sortSelect = root.querySelector("#news-sort-select");
+
+  if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+      newsFiltersState.search = e.target.value;
+      newsFiltersState.page = 1;
+      applyNewsFilters();
+      const paginated = paginateNews();
+      reRenderNewsGrid(paginated);
+      const totalPagesLocal = Math.max(
+        1,
+        Math.ceil(FILTERED_NEWS_CACHE.length / NEWS_PAGE_SIZE)
+      );
+      renderNewsPagination(totalPagesLocal);
+    });
+  }
+
+  if (sortSelect) {
+    sortSelect.value = newsFiltersState.sort;
+    sortSelect.addEventListener("change", (e) => {
+      newsFiltersState.sort = e.target.value;
+      newsFiltersState.page = 1;
+      applyNewsFilters();
+      const paginated = paginateNews();
+      reRenderNewsGrid(paginated);
+      const totalPagesLocal = Math.max(
+        1,
+        Math.ceil(FILTERED_NEWS_CACHE.length / NEWS_PAGE_SIZE)
+      );
+      renderNewsPagination(totalPagesLocal);
+    });
+  }
+
+  renderNewsPagination(totalPages);
+}
+
+
+
+
 
 // detalhe
 async function renderNewsDetail(rootId, newsId) {
@@ -507,29 +815,26 @@ async function renderNewsDetail(rootId, newsId) {
     ? `
       <div class="news-source">
         <span class="news-source-label">Fonte</span>
-        ${
-          news.source_name
-            ? `<span class="news-source-text">${news.source_name}</span>`
-            : ""
-        }
-        ${
-          news.source_instagram
-            ? `<a
+        ${news.source_name
+      ? `<span class="news-source-text">${news.source_name}</span>`
+      : ""
+    }
+        ${news.source_instagram
+      ? `<a
                   href="https://instagram.com/${news.source_instagram.replace(
-                    /^@/,
-                    ""
-                  )}"
+        /^@/,
+        ""
+      )}"
                   class="news-source-link"
                   target="_blank"
                   rel="noopener noreferrer"
                >
                   @${news.source_instagram.replace(/^@/, "")}
                </a>`
-            : ""
-        }
-        ${
-          news.source_url
-            ? `<a
+      : ""
+    }
+        ${news.source_url
+      ? `<a
                   href="${news.source_url}"
                   class="news-source-link"
                   target="_blank"
@@ -537,8 +842,8 @@ async function renderNewsDetail(rootId, newsId) {
                >
                   Ver publicação
                </a>`
-            : ""
-        }
+      : ""
+    }
       </div>
     `
     : "";
@@ -575,8 +880,8 @@ async function renderNewsDetail(rootId, newsId) {
         <h2 class="news-more__title">Mais notícias</h2>
         <div class="news-more__list">
           ${moreNews
-            .map(
-              (n) => `
+      .map(
+        (n) => `
             <article class="news-card news-card--compact" data-id="${n.id}">
               <div class="news-card__image-wrapper">
                 <img
@@ -595,8 +900,8 @@ async function renderNewsDetail(rootId, newsId) {
               </div>
             </article>
           `
-            )
-            .join("")}
+      )
+      .join("")}
         </div>
       </section>
 
