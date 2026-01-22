@@ -41,7 +41,7 @@ const CATEGORY_LABELS = {
 let ALL_NEWS_CACHE = [];
 let FILTERED_NEWS_CACHE = [];
 
-const NEWS_PAGE_SIZE = 9;
+const NEWS_PAGE_SIZE = 8;
 
 const newsFiltersState = {
   search: "",
