@@ -116,7 +116,8 @@ export function renderAdminSponsorsManager(container) {
         if (file) {
           const safeName = name.toLowerCase().replace(/\s+/g, "-");
           const fileExt = file.name.split(".").pop();
-          const filePath = `sponsors/${Date.now()}-${safeName}.${fileExt}`;
+          const filePath = `sponsorLogos/${Date.now()}-${safeName}.${fileExt}`;
+
 
           const storageRef = ref(storage, filePath);
           await uploadBytes(storageRef, file);
