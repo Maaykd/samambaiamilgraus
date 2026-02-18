@@ -467,7 +467,7 @@ async function renderNewsList(rootId) {
   `;
 
   // tabs
-    const tabs = root.querySelectorAll(".news-tab");
+  const tabs = root.querySelectorAll(".news-tab");
   tabs.forEach((tab) => {
     tab.addEventListener("click", () => {
       const cat = tab.getAttribute("data-category");
@@ -567,7 +567,7 @@ async function renderNewsList(rootId) {
     if (total > 1) startTimer();
   });
 
-   // inicializa filtros (busca + ordenação)
+  // inicializa filtros (busca + ordenação)
   setupNewsFiltersUI(root, totalPages);
 }
 
@@ -875,6 +875,12 @@ async function renderNewsDetail(rootId, newsId) {
           ${formatContentToHtml(news.content || "")}
         </div>
       </section>
+       <div class=\"news-share-section\">
+        <button class=\"news-share-whatsapp\" onclick=\"shareOnWhatsApp('${news.title}', '${newsId}')\">
+          <i class=\"bi bi-whatsapp\"></i>
+          <span>Compartilhar no WhatsApp</span>
+        </button>
+      </div>
 
       <section class="news-more">
         <h2 class="news-more__title">Mais notícias</h2>
@@ -921,6 +927,16 @@ async function renderNewsDetail(rootId, newsId) {
     });
   });
 }
+// Função para compartilhar notícia no WhatsApp
+function shareOnWhatsApp(title, newsId) {
+  const url = `${window.location.origin}${window.location.pathname}?id=${newsId}`;
+  const text = `Confira essa notícia: ${title}`;
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`;
+  window.open(whatsappUrl, '_blank');
+}
+
+// Tornar a função global
+window.shareOnWhatsApp = shareOnWhatsApp;
 
 // bootstrap
 document.addEventListener("DOMContentLoaded", () => {
