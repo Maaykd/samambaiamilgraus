@@ -1,23 +1,23 @@
-// assets/js/components/navbar.js
-
 const NAV_ITEMS = [
-  { name: "Início", path: "Home", icon: "house-fill" },
-  { name: "Loja", path: "Shop", icon: "bag-fill" },
-  { name: "Notícias", path: "News", icon: "journal-richtext" }
+  { name: "Notícias", path: "News",   icon: "journal-richtext" },
+  { name: "Loja",    path: "Shop",   icon: "bag-fill" },
+  { name: "Sobre",   path: "Sobre",  icon: "person-fill" }  // ← novo nome
 ];
-
 
 function getCurrentPageName() {
   const path = window.location.pathname.split("/").pop() || "index.html";
-  if (path.toLowerCase().includes("shop")) return "Shop";
+  if (path.toLowerCase().includes("shop"))  return "Shop";
   if (path.toLowerCase().includes("admin")) return "Admin";
-  if (path.toLowerCase().includes("news")) return "News";
-  return "Home";
+  if (path.toLowerCase().includes("home") || path.toLowerCase().includes("sobre")) return "Sobre"; // ← detecta home.html ou sobre.html
+  if (path.toLowerCase().includes("news") || path === "index.html") return "News";
+  return "News";
 }
 
 function createPageUrl(name) {
-  if (name === "Home") return "index.html";
-  return name.toLowerCase() + ".html"; // News -> news.html
+  if (name === "News") return "index.html";      // Notícias = index.html
+  if (name === "Sobre") return "home.html";      // Sobre = home.html (antiga home)
+  if (name === "Shop") return "shop.html";       // Loja mantém
+  return name.toLowerCase() + ".html";
 }
 
 export function renderNavbar(rootId = "navbar-root") {
@@ -29,29 +29,29 @@ export function renderNavbar(rootId = "navbar-root") {
   root.innerHTML = `
     <nav class="navbar">
       <div class="navbar-inner">
-        <a href="${createPageUrl("Home")}" class="navbar-logo">
-  <span class="navbar-logo-smg">SMG</span>
-  <div class="navbar-logo-text">
-    <p class="navbar-logo-title">SAMAMBAIA MIL GRAUS</p>
-    <p class="navbar-logo-sub">@samambaiamilgraus</p>
-  </div>
-</a>
-
+        <a href="${createPageUrl("News")}" class="navbar-logo">
+          <span class="navbar-logo-smg">SMG</span>
+          <div class="navbar-logo-text">
+            <p class="navbar-logo-title">SAMAMBAIA MIL GRAUS</p>
+            <p class="navbar-logo-sub">@samambaiamilgraus</p>
+          </div>
+        </a>
 
         <div class="navbar-menu">
           ${NAV_ITEMS.map(
-    (item) => `
-            <a href="${createPageUrl(item.path)}">
-              <button class="navbar-btn ${currentPage === item.path
-        ? "navbar-btn-active"
-        : "navbar-btn-ghost"
-      }">
-                <i class="bi bi-${item.icon} navbar-item-icon"></i>
-                <span>${item.name}</span>
-              </button>
-            </a>
-          `
-  ).join("")}
+            (item) => `
+              <a href="${createPageUrl(item.path)}">
+                <button class="navbar-btn ${
+                  currentPage === item.path
+                    ? "navbar-btn-active"
+                    : "navbar-btn-ghost"
+                }">
+                  <i class="bi bi-${item.icon} navbar-item-icon"></i>
+                  <span>${item.name}</span>
+                </button>
+              </a>
+            `
+          ).join("")}
         </div>
 
         <button class="navbar-toggle" aria-label="Abrir menu" id="navbar-toggle-btn">
@@ -62,18 +62,19 @@ export function renderNavbar(rootId = "navbar-root") {
       <div class="navbar-mobile" id="navbar-mobile-menu">
         <div class="navbar-mobile-inner">
           ${NAV_ITEMS.map(
-    (item) => `
-            <a href="${createPageUrl(item.path)}" class="navbar-mobile-link">
-              <button class="navbar-btn ${currentPage === item.path
-        ? "navbar-btn-active"
-        : "navbar-btn-ghost"
-      }" data-mobile-item>
-                <i class="bi bi-${item.icon} navbar-item-icon"></i>
-                <span>${item.name}</span>
-              </button>
-            </a>
-          `
-  ).join("")}
+            (item) => `
+              <a href="${createPageUrl(item.path)}" class="navbar-mobile-link">
+                <button class="navbar-btn ${
+                  currentPage === item.path
+                    ? "navbar-btn-active"
+                    : "navbar-btn-ghost"
+                }" data-mobile-item>
+                  <i class="bi bi-${item.icon} navbar-item-icon"></i>
+                  <span>${item.name}</span>
+                </button>
+              </a>
+            `
+          ).join("")}
         </div>
       </div>
     </nav>
