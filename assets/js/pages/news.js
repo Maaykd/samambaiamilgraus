@@ -371,7 +371,7 @@ async function renderNewsList(rootId) {
       .map(
         (n) => `
           <li class="news-sidebar__item">
-            <a href="news.html?id=${n.id}">
+            <a href="index.html?id=${n.id}">
               <span class="news-sidebar__item-title">${n.title || ""}</span>
               <span class="news-sidebar__item-date">${formatDate(
           n.created_at
@@ -504,7 +504,7 @@ async function renderNewsList(rootId) {
     card.addEventListener("click", () => {
       const id = card.getAttribute("data-id");
       if (!id) return;
-      window.location.href = `news.html?id=${id}`;
+      window.location.href = `index.html?id=${id}`;
     });
   });
 
@@ -727,7 +727,7 @@ function reRenderNewsGrid(paginated) {
     card.addEventListener("click", () => {
       const id = card.getAttribute("data-id");
       if (!id) return;
-      window.location.href = `news.html?id=${id}`;
+      window.location.href = `index.html?id=${id}`;
     });
   });
 }
@@ -786,7 +786,7 @@ async function renderNewsDetail(rootId, newsId) {
     root.innerHTML = `
       <section class="news-detail">
         <p class="news-empty">Notícia não encontrada.</p>
-        <a href="news.html" class="news-back-link">Voltar para notícias</a>
+        <a href="index.html" class="news-back-link">Voltar para notícias</a>
       </section>
     `;
     return;
@@ -911,7 +911,7 @@ async function renderNewsDetail(rootId, newsId) {
         </div>
       </section>
 
-      <a href="news.html" class="news-back-link">Voltar para todas as notícias</a>
+      <a href="index.html" class="news-back-link">Voltar para todas as notícias</a>
     </article>
   `;
 
@@ -923,7 +923,7 @@ async function renderNewsDetail(rootId, newsId) {
     card.addEventListener("click", () => {
       const id = card.getAttribute("data-id");
       if (!id) return;
-      window.location.href = `news.html?id=${id}`;
+      window.location.href = `index.html?id=${id}`;
     });
   });
 }

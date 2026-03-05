@@ -6,11 +6,19 @@ const NAV_ITEMS = [
 
 function getCurrentPageName() {
   const path = window.location.pathname.split("/").pop() || "index.html";
-  if (path.toLowerCase().includes("shop"))  return "Shop";
-  if (path.toLowerCase().includes("admin")) return "Admin";
-  if (path.toLowerCase().includes("home") || path.toLowerCase().includes("sobre")) return "Sobre"; // ← detecta home.html ou sobre.html
-  if (path.toLowerCase().includes("news") || path === "index.html") return "News";
-  return "News";
+  console.log("DEBUG - Página detectada:", path); // ← pra debug
+  
+  // Prioridade: página exata primeiro
+  if (path === "index.html" || path.includes("news")) return "News";
+  if (path === "home.html" || path === "sobre.html") return "Sobre";
+  if (path === "shop.html") return "Shop";
+  if (path.includes("admin")) return "Admin";
+  
+  // Fallback por nome do arquivo
+  if (path.toLowerCase().includes("home") || path.toLowerCase().includes("sobre")) return "Sobre";
+  if (path.toLowerCase().includes("shop")) return "Shop";
+  
+  return "News"; // Padrão: notícias (index.html)
 }
 
 function createPageUrl(name) {
